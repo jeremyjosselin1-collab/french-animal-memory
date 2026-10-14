@@ -1,11 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Memory des animaux</title>
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh}
-h1{font-size:1.6rem;margin:14px 0 4px}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on{background:#d63031}
+.big{font-size:7rem;line-height:1.2}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
+.opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
+.opt.e{font-size:4rem;padding:8px}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}
+#msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
+#score{font-size:1.2rem;font-weight:bold}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+#end{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
 #status{min-height:2.6em;font-size:1.2rem;padding:0 10px}
 #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:520px;margin:10px auto;padding:10px}
 @media(min-width:700px){#grid{grid-template-columns:repeat(5,1fr);max-width:720px}}
@@ -15,90 +30,57 @@ h1{font-size:1.6rem;margin:14px 0 4px}
 .face{position:absolute;inset:0;border-radius:14px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 3px 8px #0002}
 .back{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:2.4rem}
 .front{background:#fff;transform:rotateY(180deg);font-size:3.2rem;flex-direction:column}
-.front small{font-size:.9rem;margin-top:4px}
-.card.done .front{background:#c8f7c5}
-#panel{display:none;margin:10px auto;max-width:460px;padding:14px;background:#fff;border-radius:16px;box-shadow:0 3px 10px #0002}
-#panel .big{font-size:4rem}
-button{font-size:1.2rem;padding:12px 20px;border:0;border-radius:12px;margin:6px;background:#00b894;color:#fff}
-button.alt{background:#636e72}
-#score{font-size:1.1rem}
-#win{display:none;position:fixed;inset:0;background:#fff7e6;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem}
+.front small{font-size:.9rem;margin-top:4px}.card.done .front{background:#c8f7c5}
+#panel{display:none;margin:10px auto;max-width:460px;padding:14px;background:#fff;border-radius:16px;box-shadow:0 3px 10px #0002}#panel .big{font-size:4rem}
 </style></head><body>
-<a href="./" style="display:inline-block;margin:10px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem">🏠 Menu</a>
-<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
-<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
-<h1>🐾 Memory des animaux</h1>
-<div id="score"></div>
-<div id="status">Tourne deux cartes pour trouver une paire !</div>
-<div id="panel">
-  <div class="big" id="pEmoji"></div>
-  <div>Dis le nom en français !</div>
-  <button id="mic">🎤 Parler</button>
-  <button class="alt" id="hint">💡 Indice</button>
-  <div id="heard" style="min-height:1.5em;margin-top:6px"></div>
-</div>
-<div id="grid"></div>
-<div id="win"><div style="font-size:5rem">🏆</div><div>Bravo ! Tu as gagné !</div><button id="again">Rejouer</button><a href="./" style="font-size:1.2rem;margin-top:10px">🏠 Menu</a></div>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gMemoire" data-i="0"></h1>
+
+<div id="score"></div><div id="status"></div>
+<div id="panel"><div class="big" id="pEmoji"></div><div data-t="m_say"></div>
+<button id="mic" data-t="talk"></button><button class="tap" id="hint" data-t="hint"></button>
+<div id="heard" style="min-height:1.5em;margin-top:6px"></div></div>
+<div id="grid"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again" data-t="again"></button><a class="menu" href="./" data-t="menu"></a></div>
 <script>
-const ANIMALS=[["chat","🐱",["chat"]],["chien","🐶",["chien"]],["lapin","🐰",["lapin"]],["éléphant","🐘",["elephant"]],["girafe","🦒",["girafe","giraffe"]],["zèbre","🦓",["zebre"]],["singe","🐵",["singe"]],["ours","🐻",["ours"]],["tigre","🐯",["tigre"]]];
-const PAIRS=5;
-const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z ]/g," ");
-const grid=document.getElementById("grid"),status=document.getElementById("status"),panel=document.getElementById("panel");
-let first=null,lock=false,pending=null,cleared=0,tries=0,SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+header();document.title=document.querySelector("h1").textContent;
+const $=id=>document.getElementById(id);
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
+</script>
+<script>
+const PAIRS=5,grid=$("grid"),status=$("status"),panel=$("panel");
+let first=null,lock=false,pending=null,cleared=0,tries=0;
 function start(){
-  grid.innerHTML="";first=null;lock=false;pending=null;cleared=0;tries=0;panel.style.display="none";
-  document.getElementById("win").style.display="none";
-  const pick=shuffle(ANIMALS.slice()).slice(0,PAIRS);
-  shuffle([...pick,...pick]).forEach(a=>{
-    const c=document.createElement("div");c.className="card";c.animal=a;
-    c.innerHTML=`<div class="inner"><div class="face back">?</div><div class="face front">${a[1]}<small></small></div></div>`;
-    c.onclick=()=>tap(c);grid.appendChild(c);
-  });
-  status.textContent="Tourne deux cartes pour trouver une paire !";score();
+  grid.innerHTML="";first=null;lock=false;pending=null;cleared=0;tries=0;panel.style.display="none";$("end").style.display="none";
+  const pick=shuffle(ANIMALS).slice(0,PAIRS);
+  shuffle([...pick,...pick]).forEach(a=>{const c=document.createElement("div");c.className="card";c.animal=a;
+    c.innerHTML=`<div class="inner"><div class="face back">?</div><div class="face front">${a.e}<small></small></div></div>`;c.onclick=()=>tap(c);grid.appendChild(c)});
+  status.textContent=t("m_turn");score();
 }
-function score(){document.getElementById("score").textContent=`Paires : ${cleared} / ${PAIRS} · Essais : ${tries}`}
+function score(){$("score").textContent=t("m_score",cleared,PAIRS,tries)}
 function tap(c){
-  if(lock||pending||c.classList.contains("up"))return;
-  c.classList.add("up");
-  if(!first){first=c;return}
-  tries++;score();
-  if(first.animal===c.animal){
-    const pair=[first,c];first=null;pending=pair;
-    status.textContent="Une paire ! 🎉";
-    document.getElementById("pEmoji").textContent=c.animal[1];
-    document.getElementById("heard").textContent=SR?"":"Micro non disponible : utilise Chrome ou Safari récent.";
-    panel.style.display="block";
-  }else{
-    lock=true;const a=first;first=null;
-    status.textContent="Pas pareil, essaie encore !";
-    setTimeout(()=>{a.classList.remove("up");c.classList.remove("up");lock=false},900);
-  }
+  if(lock||pending||c.classList.contains("up"))return;c.classList.add("up");
+  if(!first){first=c;return}tries++;score();
+  if(first.animal===c.animal){pending=[first,c];first=null;status.textContent=t("m_pair");$("pEmoji").textContent=c.animal.e;$("heard").textContent=SR?"":t("m_nomic");panel.style.display="block"}
+  else{lock=true;const a=first;first=null;status.textContent=t("m_diff");setTimeout(()=>{a.classList.remove("up");c.classList.remove("up");lock=false},900)}
 }
-function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";speechSynthesis.speak(u)}catch(e){}}
 function success(){
-  pending.forEach(c=>{c.classList.add("done");c.querySelector("small").textContent=c.animal[0]});
-  speak("Bravo ! "+pending[0].animal[0]);
-  status.textContent=`✅ Bravo ! C'est « ${pending[0].animal[0]} » !`;
-  pending=null;panel.style.display="none";cleared++;score();
-  if(cleared===PAIRS)setTimeout(()=>document.getElementById("win").style.display="flex",900);
+  const a=pending[0].animal;pending.forEach(c=>{c.classList.add("done");c.querySelector("small").textContent=a.w});
+  speak(t("bravo")+" "+a.w);status.textContent=t("m_ok",a.w);pending=null;panel.style.display="none";cleared++;score();
+  if(cleared===PAIRS)setTimeout(()=>endScreen(t("won")),900);
 }
-document.getElementById("mic").onclick=()=>{
-  if(!pending)return;
-  const heard=document.getElementById("heard");
-  if(!SR){heard.textContent="La reconnaissance vocale n'est pas disponible ici.";return}
-  const r=new SR();r.lang="fr-FR";r.interimResults=false;r.maxAlternatives=5;
-  heard.textContent="J'écoute… 👂";
-  r.onresult=e=>{
-    const alts=[...e.results[0]].map(x=>norm(x.transcript));
-    const ok=pending[0].animal[2].some(w=>alts.some(t=>t.split(/\s+/).includes(w)||t.includes(w)));
-    heard.textContent=`J'ai entendu : « ${e.results[0][0].transcript} »`;
-    if(ok)success();else{status.textContent="❌ Pas tout à fait, réessaie !";speak("Essaie encore")}
-  };
-  r.onerror=e=>{heard.textContent=e.error==="not-allowed"?"Autorise le micro dans le navigateur.":"Je n'ai rien entendu, réessaie."};
-  r.start();
+$("mic").onclick=()=>{
+  if(!pending)return;const heard=$("heard");if(!SR){heard.textContent=t("nosr");return}
+  const r=new SR();r.lang=SRLANG;r.interimResults=false;r.maxAlternatives=5;heard.textContent=t("listening");
+  r.onresult=e=>{const alts=[...e.results[0]].map(x=>" "+norm(x.transcript)+" ");const ws=names(pending[0].animal);
+    const ok=ws.some(w=>alts.some(x=>x.includes(" "+w+" ")));heard.textContent=t("heard",e.results[0][0].transcript);
+    if(ok)success();else{status.textContent=t("m_wrong");speak(t("tryAgain"))}};
+  r.onerror=e=>{heard.textContent=e.error==="not-allowed"?t("allowMic"):t("nothing")};r.start();
 };
-document.getElementById("hint").onclick=()=>{if(pending){const w=pending[0].animal[0];document.getElementById("heard").textContent="Indice : "+w;speak(w)}};
-document.getElementById("again").onclick=start;
-start();
-</script></body></html>
+$("hint").onclick=()=>{if(pending){const w=pending[0].animal.w;$("heard").textContent=t("hintIs")+w;speak(w)}};
+$("again").onclick=start;start();
+</script>
+</body></html>
