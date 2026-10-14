@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Les lettres cachées</title>
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:system-ui,sans-serif;background:#f0fff4;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
 .menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
 h1{font-size:1.6rem;margin:6px 0}
 button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
-button.say{background:#0984e3}
+button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on{background:#d63031}
 .big{font-size:7rem;line-height:1.2}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
 .opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
@@ -16,52 +18,38 @@ button.say{background:#0984e3}
 .ok{background:#55efc4!important}.no{background:#fab1a0!important}
 #msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
 #score{font-size:1.2rem;font-weight:bold}
-#end{display:none;position:fixed;inset:0;background:inherit;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+#end{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
 .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
 .slots{font-size:2.6rem;letter-spacing:.15em;font-weight:bold;margin:10px;font-family:monospace}.tile{font-size:1.8rem;width:64px;height:64px;padding:0;background:#fdcb6e;color:#333}
 </style></head><body>
-<a class="menu" href="./">🏠 Menu</a>
-<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
-<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
-<h1>Les lettres cachées</h1>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gLettres" data-i="0"></h1>
 
-<div id="score"></div>
-<div class="big" id="emo"></div>
-<div class="slots" id="slots"></div>
-<button class="say" id="hear">🔊 Écouter le mot</button>
-<div id="msg"></div>
-<div id="tiles"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again">Rejouer</button><a class="menu" href="./">🏠 Menu</a></div>
+<div id="score"></div><div class="big" id="emo"></div><div class="slots" id="slots"></div>
+<button class="say" id="hear" data-t="l_hear"></button><div id="msg"></div><div id="tiles"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again" data-t="again"></button><a class="menu" href="./" data-t="menu"></a></div>
 <script>
-const ANIMALS=[{w:"canard",e:"🦆",g:"m",pl:"canards",s:"coin-coin"},{w:"chien",e:"🐶",g:"m",pl:"chiens",s:"ouaf ouaf"},{w:"chat",e:"🐱",g:"m",pl:"chats",s:"miaou"},{w:"lapin",e:"🐰",g:"m",pl:"lapins",s:"grignote"},{w:"éléphant",e:"🐘",g:"m",pl:"éléphants",s:"pouêt"},{w:"girafe",e:"🦒",g:"f",pl:"girafes",s:"mmm"},{w:"zèbre",e:"🦓",g:"m",pl:"zèbres",s:"hihan"},{w:"singe",e:"🐵",g:"m",pl:"singes",s:"hou hou ha ha"},{w:"ours",e:"🐻",g:"m",pl:"ours",s:"grrr"},{w:"tigre",e:"🐯",g:"m",pl:"tigres",s:"grrraou"}];
+header();document.title=document.querySelector("h1").textContent;
 const $=id=>document.getElementById(id);
-const TTS="speechSynthesis" in window;
-function speak(t){if(!TTS)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function art(a){return /^[aeiouyéè]/i.test(a.w)?"l'":(a.g=="f"?"la ":"le ")}
-function un(a){return a.g=="f"?"une ":"un "}
 function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
-function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak("Bravo !")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-let list,i,word,hole,filled,score;
-const ABC="abcdeghilnoprstuz";
+let list,i,word,hole,filled,score;const ABC="abcdeghilmnoprstuz";
 function start(){list=shuffle(ANIMALS);i=0;score=0;$("end").style.display="none";next()}
-function next(){
-  if(i>=list.length)return endScreen("Tu as trouvé "+score+" mots !");
-  const a=list[i++];word=a.w;$("emo").textContent=a.e;$("score").textContent="Mot "+i+" / "+list.length;
-  const idx=[...word].map((c,k)=>k).filter(k=>/[a-zéè]/.test(word[k]));
+function next(){if(i>=list.length)return endScreen(t("l_end",score));
+  const a=list[i++];word=a.w;$("emo").textContent=a.e;$("score").textContent=t("l_word",i,list.length);
+  const idx=[...word].map((c,k)=>k).filter(k=>/[a-zéèáíóú]/.test(word[k]));
   hole=shuffle(idx).slice(0,Math.min(2,Math.max(1,Math.floor(word.length/3)))).sort((x,y)=>x-y);filled=0;draw();
-  const need=hole.map(k=>word[k]);const extra=shuffle([...ABC].filter(c=>!need.includes(c))).slice(0,6-need.length);
-  const tg=$("tiles");tg.innerHTML="";
-  shuffle([...new Set(need),...extra]).forEach(c=>{const b=document.createElement("button");b.className="tile";b.textContent=c;b.onclick=()=>tap(b,c);tg.appendChild(b)});
-  $("msg").textContent="Quelle lettre manque ?";
-}
+  const need=hole.map(k=>word[k]);const extra=shuffle([...ABC].filter(c=>!need.includes(c))).slice(0,6-new Set(need).size);
+  const tg=$("tiles");tg.innerHTML="";shuffle([...new Set(need),...extra]).forEach(c=>{const b=document.createElement("button");b.className="tile";b.textContent=c;b.onclick=()=>tap(b,c);tg.appendChild(b)});$("msg").textContent=t("l_q")}
 function draw(){$("slots").textContent=[...word].map((c,k)=>hole.indexOf(k)>=filled?"_":c).join("")}
-function tap(b,c){
-  if(filled>=hole.length)return;
-  if(c===word[hole[filled]]){filled++;draw();pop($("slots"));speak(c);if(filled===hole.length){score++;$("msg").textContent="✅ Bravo ! "+art(list[i-1])+word;speak("Bravo ! "+word);setTimeout(next,1600)}}
-  else{b.classList.add("no");setTimeout(()=>b.classList.remove("no"),500);$("msg").textContent="Pas cette lettre, essaie encore !"}
-}
+function tap(b,c){if(filled>=hole.length)return;
+  if(c===word[hole[filled]]){filled++;draw();pop($("slots"));speak(c);if(filled===hole.length){score++;const a=list[i-1];$("msg").textContent=t("l_ok",art(a)+word);speak(t("bravo")+" "+word);setTimeout(next,1600)}}
+  else{b.classList.add("no");setTimeout(()=>b.classList.remove("no"),500);$("msg").textContent=t("l_no")}}
 $("hear").onclick=()=>speak(word);$("again").onclick=start;start();
 </script>
 </body></html>
