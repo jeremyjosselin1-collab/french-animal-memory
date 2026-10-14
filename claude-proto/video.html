@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Vidéo mystère</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="../proto/fx.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none;background:#0b1026}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+video{position:absolute;width:1px;height:1px;opacity:0}
+#shot{display:block;max-width:92vw;max-height:52vh;width:min(92vw,560px);height:min(52vh,420px);border-radius:24px;box-shadow:0 10px 30px #0008;background:#000;image-rendering:pixelated}
+#ring{position:fixed;top:14px;left:50%;transform:translateX(-50%);width:70px;height:70px}
+#hud{position:fixed;top:16px;left:16px;color:#fff;font:800 1.1rem system-ui;text-shadow:0 2px 4px #000a}
+#ask{position:fixed;top:92px;left:0;right:0;text-align:center;color:#fff;font:700 1.3rem system-ui;text-shadow:0 2px 4px #000a;padding:0 10px}
+#choices{position:fixed;left:0;right:0;bottom:92px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:0 10px}
+.ch{border:0;border-radius:18px;padding:14px 18px;font:800 1.6rem system-ui;background:#fff;box-shadow:0 5px 0 #0003,0 8px 16px #0004;min-width:74px}
+.ch.wrong{animation:sh .4s}
+@keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#bar{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:10px}
+#bar button{border:0;border-radius:16px;padding:12px 16px;font:700 1.1rem system-ui;background:#0984e3;color:#fff;box-shadow:0 3px 8px #0004}#bar button.on{background:#d63031}
+#credit{position:fixed;bottom:4px;left:8px;right:8px;text-align:center;font:400 .72rem system-ui;color:#ffffff80}
+#credit a{color:#ffffffb0}
+#start,#end{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0009;z-index:70;color:#fff;font:700 1.3rem system-ui;text-align:center;padding:20px;gap:14px}
+#start button,#end button{font:800 1.8rem system-ui;padding:18px 30px;border:0;border-radius:24px;background:#00b894;color:#fff}
+#end{display:none}
+</style></head><body>
+<div id="stage"><video id="v" muted loop playsinline preload="none"></video><canvas id="shot"></canvas></div>
+<canvas id="ring"></canvas>
+<div id="hud"></div>
+<div id="ask"></div>
+<div id="choices"></div>
+<div id="bar"><button id="rep">🔊</button><button id="mic">🎤</button></div>
+<div id="credit"></div>
+<div id="start"><div id="st"></div><button id="go">▶</button></div>
+<div id="end"><div id="et"></div><button id="again">↻</button></div>
+<script>
+langBar();
+const es=LANG=="es";
+const T={
+  title:es?"🎬 Video misterioso":"🎬 Vidéo mystère",
+  start:es?"Un video real se ve borroso. ¡Mirá, escuchá y decí qué animal es antes de que se aclare del todo!":"Une vraie vidéo apparaît toute floue. Regarde, écoute et dis quel animal c'est avant qu'elle devienne nette !",
+  go:es?"¡Jugar!":"Jouer !",
+  ask:es?"¿Qué animal es?":"Quel animal est-ce ?",
+  ok:w=>es?`✅ ¡Sí! Es ${art(w)}${w.w}`:`✅ Oui ! C'est ${art(w)}${w.w}`,
+  no:w=>es?`Casi... ¡seguí mirando!`:`Presque... continue à regarder !`,
+  score:(n,m)=>es?`⭐ ${n} / ${m}`:`⭐ ${n} / ${m}`,
+  end:(n,m)=>es?`¡Encontraste ${n} / ${m} animales!`:`Tu as trouvé ${n} / ${m} animaux !`,
+  credit:c=>(es?"Video de Wikimedia Commons · Autor: ":"Vidéo de Wikimedia Commons · Auteur : ")+c.by+" · "+c.lic,
+  mic:es?"🎤 Hablar":"🎤 Parler"
+};
+st.textContent=T.start;go.textContent=T.go;ask.textContent=T.ask;et.id="et";
+const VIDEOS=[
+ {u:"https://upload.wikimedia.org/wikipedia/commons/7/75/Ducks_at_the_Duck_Pond_-_Sonoma_-_September_2022_-_Sarah_Stierch.webm",ext:"webm",lic:"CC BY 4.0",by:"Sarah Stierch",pg:"https://commons.wikimedia.org/wiki/File:Ducks_at_the_Duck_Pond_-_Sonoma_-_September_2022_-_Sarah_Stierch.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/6/67/Dog_walking_in_the_Mission_in_San_Francisco.ogv",ext:"ogg",lic:"CC BY-SA 3.0",by:"Sage Ross",pg:"https://commons.wikimedia.org/wiki/File:Dog_walking_in_the_Mission_in_San_Francisco.ogv"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/6/6f/Kitten_jumping_on_bamboo_mat.webm",ext:"webm",lic:"CC0",by:"Fumikas Sagisavas",pg:"https://commons.wikimedia.org/wiki/File:Kitten_jumping_on_bamboo_mat.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/2/2c/Pet_rabbit_eating_grass.webm",ext:"webm",lic:"CC BY-SA 4.0",by:"金色黎明",pg:"https://commons.wikimedia.org/wiki/File:Pet_rabbit_eating_grass.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/5/5a/An_elephant_in_the_mole_game_reserve_in_Northern_Ghana.webm",ext:"webm",lic:"CC BY-SA 4.0",by:"Sir Amugi",pg:"https://commons.wikimedia.org/wiki/File:An_elephant_in_the_mole_game_reserve_in_Northern_Ghana.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/8/8a/Feeding_a_giraffe_at_the_Giraffe_Centre_in_Nairobi,_Kenya.webm",ext:"webm",lic:"CC BY 4.0",by:"Lebu Ayiga",pg:"https://commons.wikimedia.org/wiki/File:Feeding_a_giraffe_at_the_Giraffe_Centre_in_Nairobi,_Kenya.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/1/13/A_Zebra_at_the_Oribi_Gorge_Nature_reserve.webm",ext:"webm",lic:"CC BY-SA 3.0",by:"Amada44",pg:"https://commons.wikimedia.org/wiki/File:A_Zebra_at_the_Oribi_Gorge_Nature_reserve.webm"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/7/72/Mona_monkey_Lagos_Nigeria.ogv",ext:"ogg",lic:"CC BY-SA 4.0",by:"Zacharymccune",pg:"https://commons.wikimedia.org/wiki/File:Mona_monkey_Lagos_Nigeria.ogv"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/8/88/Brown_bear_itching_back_on_tree.ogv",ext:"ogg",lic:"CC BY-SA 3.0",by:"Joe Chill 2",pg:"https://commons.wikimedia.org/wiki/File:Brown_bear_itching_back_on_tree.ogv"},
+ {u:"https://upload.wikimedia.org/wikipedia/commons/8/89/Walking_Tiger_in_Zoo.webm",ext:"webm",lic:"CC BY-SA 4.0",by:"Path slopu",pg:"https://commons.wikimedia.org/wiki/File:Walking_Tiger_in_Zoo.webm"}
+];
+const shot=document.getElementById("shot"),sc=shot.getContext("2d"),off=document.createElement("canvas"),oc=off.getContext("2d",{willReadFrequently:true});
+oc.imageSmoothingEnabled=false;sc.imageSmoothingEnabled=false;
+const rc=ring.getContext("2d");function rsRing(){ring.width=70*devicePixelRatio;ring.height=70*devicePixelRatio;rc.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}rsRing();
+let order=[],idx=0,score=0,round=0,ROUNDS=8,px=26,t0=0,solved=false,timeInRound=0,DUR=16000,fails=0;
+function drawRing(p){rc.clearRect(0,0,70,70);rc.lineWidth=7;rc.strokeStyle="#ffffff30";rc.beginPath();rc.arc(35,35,28,0,7);rc.stroke();
+  rc.strokeStyle="#00e0a8";rc.beginPath();rc.arc(35,35,28,-Math.PI/2,-Math.PI/2+p*Math.PI*2);rc.stroke();
+  rc.fillStyle="#fff";rc.font="800 18px system-ui";rc.textAlign="center";rc.textBaseline="middle";rc.fillText("🎥",35,36)}
+function pick4(correct){const pool=ANIMALS.filter(a=>a!==correct).sort(()=>Math.random()-.5).slice(0,3);const opts=[correct,...pool].sort(()=>Math.random()-.5);
+  choices.innerHTML="";opts.forEach(a=>{const b=document.createElement("button");b.className="ch";b.textContent=a.e;b.onclick=()=>guess(a,b);choices.appendChild(b)})}
+function newRound(){
+  if(round>=ROUNDS){return finish()}
+  round++;solved=false;t0=0;px=26;fails=0;
+  const vi=order[idx%order.length];idx++;const a=ANIMALS[vi],src=VIDEOS[vi];
+  hud.textContent=T.score(score,ROUNDS);
+  v.pause();v.removeAttribute("src");while(v.firstChild)v.removeChild(v.firstChild);
+  const s=document.createElement("source");s.src=src.u;s.type="video/"+src.ext;v.appendChild(s);v.load();
+  v.oncanplay=()=>{v.play().catch(()=>{})};
+  v.onerror=()=>{shot.getContext("2d").fillText("🎬",shot.width/2-20,shot.height/2)};
+  credit.innerHTML=`<a href="${src.pg}" target="_blank" rel="noopener">${T.credit(src)}</a>`;
+  window._target=a;pick4(a);
+  speak(T.ask);
+}
+function render(ts){
+  const dt=ts-(t0||ts);t0=ts;
+  if(!solved){timeInRound+=dt;const p=Math.min(1,timeInRound/DUR);drawRing(p);
+    px=Math.max(2,26-p*24);
+  }
+  if(v.readyState>=2&&v.videoWidth){
+    const vw=v.videoWidth,vh=v.videoHeight,ar=vw/vh,CW=560,CH=420;
+    let dw=CW,dh=CW/ar;if(dh>CH){dh=CH;dw=CH*ar}
+    shot.width=dw;shot.height=dh;
+    const ow=Math.max(6,Math.round(dw/px)),oh=Math.max(6,Math.round(dh/px));
+    off.width=ow;off.height=oh;oc.drawImage(v,0,0,ow,oh);
+    const c2=shot.getContext("2d");c2.imageSmoothingEnabled=false;c2.drawImage(off,0,0,ow,oh,0,0,dw,dh);
+  }
+  requestAnimationFrame(render)
+}
+function flashReveal(){const c2=shot.getContext("2d");let f=1;const anim=()=>{if(f<=0)return;c2.fillStyle=`rgba(255,255,255,${f})`;c2.fillRect(0,0,shot.width,shot.height);f-=.08;requestAnimationFrame(anim)};anim()}
+function guess(a,btn){
+  if(solved)return;
+  if(a===window._target){
+    solved=true;px=1;score++;SFX.good();confetti();burst(innerWidth/2,innerHeight*.35,30,[a.e,"⭐"]);
+    const r=shot.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,24,[a.e]);
+    ask.textContent=T.ok(a);speak(T.ok(a).replace(/[✅]/g,""));
+    timeInRound=0;setTimeout(()=>{ask.textContent=T.ask;newRound()},2200);
+  } else {
+    fails++;SFX.bad();btn.classList.add("wrong");setTimeout(()=>btn.classList.remove("wrong"),400);
+    ask.textContent=T.no();speak(T.no());setTimeout(()=>{if(!solved)ask.textContent=T.ask},1200);
+  }
+}
+function finish(){
+  v.pause();choices.innerHTML="";ask.textContent="";hud.textContent="";credit.textContent="";
+  et.textContent="🏆 "+T.end(score,ROUNDS);speak(T.end(score,ROUNDS));end.style.display="flex";
+}
+go.onclick=()=>{
+  unlockAudio();start.style.display="none";
+  order=ANIMALS.map((_,i)=>i).sort(()=>Math.random()-.5);idx=0;score=0;round=0;timeInRound=0;
+  newRound();
+};
+again.onclick=()=>{end.style.display="none";start.style.display="flex"};
+rep.onclick=()=>{if(window._target)speak(T.ask)};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,live=false;
+if(!SRc)mic.style.display="none";else mic.textContent=T.mic;
+mic.onclick=()=>{live=!live;mic.classList.toggle("on",live);if(live)listen();else try{rec.abort()}catch(e){}};
+function listen(){rec=new SRc();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{if(solved||!window._target)return;const n=" "+norm([...e.results].map(r=>r[0].transcript).join(" "))+" ";
+    if(names(window._target).some(w=>n.includes(" "+w+" "))){const btn=[...choices.children].find(b=>b.textContent===window._target.e);guess(window._target,btn||choices.children[0])}};
+  rec.onend=()=>{if(live)setTimeout(listen,200)};try{rec.start()}catch(x){}}
+requestAnimationFrame(render);
+</script></body></html>

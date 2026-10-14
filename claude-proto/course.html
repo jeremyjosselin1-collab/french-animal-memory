@@ -1,0 +1,167 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>La course folle</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="../proto/fx.js"></script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none;background:#87ceeb}
+#c3d{display:block;width:100vw;height:100vh}
+#top{position:fixed;top:54px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:40}
+#sign{background:#fff;border-radius:18px;padding:10px 18px;font:800 1.4rem system-ui;box-shadow:0 4px 12px #0004;display:flex;align-items:center;gap:8px}
+#hud{color:#fff;font:700 1.1rem system-ui;text-shadow:0 2px 4px #0008}
+#jump{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);border:0;border-radius:30px;padding:18px 34px;font:800 1.5rem system-ui;background:#fdcb6e;color:#2d3436;box-shadow:0 6px 0 #0003,0 10px 20px #0004;z-index:45}
+#jump:active{transform:translateX(-50%) translateY(4px)}
+#mic{position:fixed;bottom:22px;right:14px;border:0;border-radius:16px;padding:12px 16px;font:700 1.1rem system-ui;background:#0984e3;color:#fff;box-shadow:0 3px 8px #0004;z-index:45}#mic.on{background:#d63031}
+#flash{position:fixed;inset:0;background:#ff000055;opacity:0;pointer-events:none;z-index:46}
+#start,#end{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0009;z-index:70;color:#fff;font:700 1.3rem system-ui;text-align:center;padding:20px;gap:14px}
+#start button,#end button{font:800 1.8rem system-ui;padding:18px 30px;border:0;border-radius:24px;background:#00b894;color:#fff}
+#end{display:none}
+</style></head><body>
+<canvas id="c3d"></canvas>
+<div id="top"><div id="sign"></div><div id="hud"></div></div>
+<button id="jump"></button>
+<button id="mic"></button>
+<div id="flash"></div>
+<div id="start"><div id="st"></div><button id="go">▶</button></div>
+<div id="end"><div id="et"></div><button id="again">↻</button></div>
+<script>
+langBar();
+const es=LANG=="es";
+const T={
+  start:es?"Un animal sorpresa aparece arriba del obstáculo. Cuando sea el que te pedimos, ¡decilo o tocá SALTÁ antes de que te choque!":"Un animal surprise apparaît sur l'obstacle. Quand c'est celui qu'on demande, dis-le ou touche SAUTE avant qu'il te percute !",
+  go:es?"¡Correr!":"Courir !",
+  jumpBtn:es?"SALTÁ":"SAUTE",
+  say:a=>es?`Decí « ${a.w} » para saltar`:`Dis « ${a.w} » pour sauter`,
+  oops:es?"¡Uy!":"Oups !",
+  score:(s,h)=>`⭐ ${s}   ${"❤️".repeat(Math.max(0,h))}`,
+  end:s=>es?`¡Saltaste ${s} veces! 🏆`:`Tu as sauté ${s} fois ! 🏆`,
+  mic:es?"🎤 Hablar":"🎤 Parler"
+};
+st.textContent=T.start;go.textContent=T.go;jump.textContent=T.jumpBtn;
+
+function emojiTex(e,bgA,bgB,txt){
+  const cv=document.createElement("canvas");cv.width=256;cv.height=256;const c=cv.getContext("2d");
+  if(bgA){const g=c.createLinearGradient(0,0,0,256);g.addColorStop(0,bgA);g.addColorStop(1,bgB||bgA);c.fillStyle=g;
+    c.beginPath();c.moveTo(20,236);c.quadraticCurveTo(0,120,40,20);c.lineTo(216,20);c.quadraticCurveTo(256,120,236,236);c.closePath();c.fill();
+    c.strokeStyle="#ffffff90";c.lineWidth=6;c.stroke()}
+  c.font="128px sans-serif";c.textAlign="center";c.textBaseline="middle";c.fillText(e,128,bgA?96:128);
+  if(txt){c.font="800 34px system-ui";c.fillStyle="#2d3436";c.fillText(txt,128,196)}
+  const t=new THREE.CanvasTexture(cv);t.needsUpdate=true;return t;
+}
+function groundTex(){
+  const cv=document.createElement("canvas");cv.width=cv.height=256;const c=cv.getContext("2d");
+  c.fillStyle="#6ab04c";c.fillRect(0,0,256,256);c.strokeStyle="#ffffff35";c.lineWidth=6;
+  c.beginPath();c.moveTo(128,0);c.lineTo(128,256);c.moveTo(0,0);c.lineTo(0,256);c.moveTo(256,0);c.lineTo(256,256);c.stroke();
+  c.fillStyle="#58a349";for(let i=0;i<40;i++)c.fillRect(Math.random()*256,Math.random()*256,3,3);
+  const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(6,40);return t;
+}
+const cvs=document.getElementById("c3d");
+const renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true});
+const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x87ceeb,16,55);scene.background=new THREE.Color(0x87ceeb);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,200);camera.position.set(0,3.4,6.6);camera.lookAt(0,1.6,-6);
+function rs(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}rs();addEventListener("resize",rs);
+scene.add(new THREE.AmbientLight(0xffffff,.8));
+const sun=new THREE.DirectionalLight(0xffffff,.9);sun.position.set(5,10,4);scene.add(sun);
+
+const gTex=groundTex();
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(14,400),new THREE.MeshLambertMaterial({map:gTex}));
+ground.rotation.x=-Math.PI/2;ground.position.y=0;scene.add(ground);
+
+function fenceAt(z,side){
+  const g=new THREE.Group();
+  const post=new THREE.Mesh(new THREE.BoxGeometry(.25,1.1,.25),new THREE.MeshLambertMaterial({color:0xcc8844}));
+  post.position.set(side*5.2,.55,z);g.add(post);scene.add(g);return g;
+}
+const decor=[];for(let i=0;i<24;i++){const z=-i*5;decor.push(fenceAt(z,-1));decor.push(fenceAt(z,1))}
+
+const CHAR_TEX=emojiTex("🏃");
+const charMat=new THREE.SpriteMaterial({map:CHAR_TEX,transparent:true});
+const charSprite=new THREE.Sprite(charMat);charSprite.scale.set(1.5,1.5,1);charSprite.position.set(0,1.0,0);
+scene.add(charSprite);
+
+const GAP=13,N_HURDLES=7;
+let hurdles=[];
+function mkHurdle(){
+  const g=new THREE.Group();
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(2.4,.9,.4),new THREE.MeshLambertMaterial({color:0xffffff,transparent:true,opacity:.001}));
+  bar.position.y=.45;g.add(bar);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true}));sp.scale.set(1.7,1.7,1);sp.position.y=1.5;g.add(sp);
+  g.userData={bar,sp,a:null,solid:false,resolved:false};
+  scene.add(g);return g;
+}
+for(let i=0;i<N_HURDLES;i++){const h=mkHurdle();h.position.z=-32-i*GAP;hurdles.push(h)}
+
+function dressHurdle(h,a,solid){
+  h.userData.a=a;h.userData.solid=solid;h.userData.resolved=false;
+  h.userData.sp.material.map=emojiTex(a.e,solid?"#ffe066":"#dcdde1",solid?"#fdcb6e":"#b2bec3",a.w);
+  h.userData.sp.material.needsUpdate=true;
+  h.userData.bar.material.color.set(solid?0xffb84d:0xb2bec3);
+  h.userData.bar.material.opacity=solid?.001:.001;
+  h.userData.sp.material.opacity=solid?1:.55;
+}
+
+let target=null,run=false,score=0,hearts=3,speed=7,t0=0,jumping=0,shakeT=0,ended=false;
+function pickTarget(){target=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];sign.innerHTML=`<span>${target.e}</span><span>${target.w}</span>`;speak(T.say(target));hud.textContent=T.score(score,hearts)}
+function respawn(h,behindZ){
+  const pending=hurdles.some(o=>o!==h&&!o.userData.resolved&&o.userData.solid&&o.userData.a===target);
+  const makeSolid=!pending&&Math.random()<.45;
+  const a=makeSolid?target:ANIMALS[Math.floor(Math.random()*ANIMALS.length)];
+  dressHurdle(h,a,makeSolid&&a===target);
+  h.position.z=behindZ;
+}
+function doJump(){if(jumping>0)return;jumping=0.001;SFX.jump()}
+function clearCurrent(){
+  const h=hurdles.filter(h=>!h.userData.resolved&&h.userData.solid&&h.userData.a===target&&h.position.z>-5&&h.position.z<2)
+    .sort((a,b)=>b.position.z-a.position.z)[0];
+  if(!h)return false;
+  h.userData.resolved=true;doJump();score++;SFX.good();
+  const v=charSprite.position.clone();v.y+=0.6;const sv=v.project(camera);
+  burst((sv.x*.5+.5)*innerWidth,(1-(sv.y*.5+.5))*innerHeight,26,[target.e,"⭐"]);
+  speed=Math.min(16,7+score*.45);pickTarget();return true;
+}
+function miss(h){
+  h.userData.resolved=true;hearts--;SFX.bad();shakeT=12;flash.style.transition="none";flash.style.opacity=.6;
+  setTimeout(()=>{flash.style.transition="opacity .4s";flash.style.opacity=0},40);
+  hud.textContent=T.score(score,hearts);
+  if(hearts<=0)gameOver();
+}
+function gameOver(){
+  run=false;ended=true;
+  et.textContent=T.end(score);speak(T.end(score));if(score>=6)confetti();
+  end.style.display="flex";
+}
+let t00=0;
+function animate(ts){
+  const dt=Math.min(3,(ts-(t00||ts))/16.7);t00=ts;
+  if(run){
+    gTex.offset.y+=speed*dt*0.0044;
+    decor.forEach(g=>{g.children.forEach(m=>{m.position.z+=speed*dt*.022;if(m.position.z>6){m.position.z-=24*5}})});
+    hurdles.forEach(h=>{
+      h.position.z+=speed*dt*.022;
+      if(!h.userData.resolved&&h.userData.solid&&h.position.z>-0.6&&h.position.z<1.4)miss(h);
+      if(h.position.z>3){respawn(h,h.position.z-N_HURDLES*GAP)}
+    });
+    if(jumping>0){jumping+=0.045*dt;if(jumping>1){jumping=0;charSprite.position.y=1.0}else charSprite.position.y=1.0+Math.sin(jumping*Math.PI)*1.5}
+    else charSprite.position.y=1.0+Math.sin(ts/120)*.06;
+    charSprite.scale.set(1.5+Math.sin(ts/90)*.04,1.5-Math.sin(ts/90)*.04,1);
+  }
+  if(shakeT>0){camera.position.x=(Math.random()-.5)*shakeT*.03;shakeT*=.85}else camera.position.x=0;
+  renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+}
+go.onclick=()=>{
+  unlockAudio();start.style.display="none";ended=false;
+  score=0;hearts=3;speed=7;jumping=0;
+  hurdles.forEach((h,i)=>{h.userData.resolved=true;h.position.z=-32-i*GAP});
+  pickTarget();
+  hurdles.forEach(h=>respawn(h,h.position.z));
+  run=true;
+};
+again.onclick=()=>{end.style.display="none";start.style.display="flex"};
+jump.onclick=()=>{if(run)clearCurrent()||doJump()};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,live=false;
+if(!SRc)mic.style.display="none";else mic.textContent=T.mic;
+mic.onclick=()=>{live=!live;mic.classList.toggle("on",live);if(live)listen();else try{rec.abort()}catch(e){}};
+function listen(){rec=new SRc();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{if(!run||!target)return;const n=" "+norm([...e.results].map(r=>r[0].transcript).join(" "))+" ";
+    if(names(target).some(w=>n.includes(" "+w+" ")))clearCurrent()};
+  rec.onend=()=>{if(live)setTimeout(listen,200)};try{rec.start()}catch(x){}}
+requestAnimationFrame(animate);
+</script></body></html>

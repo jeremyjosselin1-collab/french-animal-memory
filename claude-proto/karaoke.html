@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Chante avec les animaux</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="../proto/fx.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none;background:#1a0b2e}
+canvas#stage{display:block;width:100vw;height:100vh}
+#bar{position:fixed;top:54px;left:0;right:0;text-align:center;color:#fff;font:700 1rem system-ui;text-shadow:0 2px 4px #000a}
+#lyr{position:fixed;left:0;right:0;bottom:30vh;text-align:center;padding:0 16px;font:800 1.6rem system-ui;color:#ffffff60}
+#lyr span{margin:0 3px;transition:color .15s,transform .15s;display:inline-block}
+#lyr span.on{color:#ffe066;transform:scale(1.2)}
+#ctl{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px}
+#ctl button{border:0;border-radius:18px;padding:14px 18px;font:800 1.2rem system-ui;color:#fff;box-shadow:0 5px 0 #0003,0 8px 16px #0004}
+#hear{background:#0984e3}#mic{background:#00b894}#mic.on{background:#d63031}#tapDone{background:#e17055}
+#mic.rdy,#tapDone.rdy{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#start,#end{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0009;z-index:70;color:#fff;font:700 1.3rem system-ui;text-align:center;padding:20px;gap:14px}
+#start button,#end button{font:800 1.8rem system-ui;padding:18px 30px;border:0;border-radius:24px;background:#00b894;color:#fff}
+#end{display:none}
+</style></head><body>
+<canvas id="stage"></canvas>
+<div id="bar"></div>
+<div id="lyr"></div>
+<div id="ctl"><button id="hear">🔊</button><button id="mic">🎤</button><button id="tapDone">👆</button></div>
+<div id="start"><div id="st"></div><button id="go"></button></div>
+<div id="end"><div id="et"></div><button id="again">↻</button></div>
+<script>
+langBar();
+const es=LANG=="es";
+const T={
+  start:es?"¡Cantá la canción de los animales! Escuchá cada verso y después cantalo o tocá el micrófono.":"Chante la chanson des animaux ! Écoute chaque couplet puis chante-le ou touche le micro.",
+  go:es?"¡Cantar!":"Chanter !",
+  mic:es?"🎤 Cantar":"🎤 Chanter",
+  hear:es?"🔊 Escuchar":"🔊 Écouter",
+  tap:es?"👆 Ya canté":"👆 J'ai chanté",
+  verse:(i,n)=>es?`Verso ${i} / ${n}`:`Couplet ${i} / ${n}`,
+  bravo:es?"¡Genial! 🎉":"Bravo ! 🎉",
+  end:s=>es?`¡Cantaste toda la canción! ⭐ ${s} / 10`:`Tu as chanté toute la chanson ! ⭐ ${s} / 10`
+};
+st.textContent=T.start;go.textContent=T.go;mic.textContent=T.mic;hear.textContent=T.hear;tapDone.textContent=T.tap;
+
+function line(a){
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  return es?`${cap(art(a))}${a.w} hace ${a.s}!`:`${cap(art(a))}${a.w} fait ${a.s} !`;
+}
+const VERSES=ANIMALS.map(a=>({a,text:line(a)}));
+
+const cv=document.getElementById("stage"),c=cv.getContext("2d");let W,H;
+function rs(){W=innerWidth;H=innerHeight;cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}rs();addEventListener("resize",rs);
+
+let vi=0,stars=0,run=false,beat=0,punch=0,t0=0,hue=260,singing=false,words=[],wi=-1;
+function setupLyrics(text){
+  lyr.innerHTML="";words=text.split(" ");wi=-1;
+  words.forEach(w=>{const s=document.createElement("span");s.textContent=w;lyr.appendChild(s)});
+}
+function highlight(i){[...lyr.children].forEach((s,k)=>s.classList.toggle("on",k===i))}
+function draw(ts){
+  const dt=Math.min(3,(ts-(t0||ts))/16.7);t0=ts;
+  beat+=dt*0.035;const pulse=Math.max(0,Math.sin(beat*Math.PI*2));
+  hue+=0.25*dt;
+  const g=c.createRadialGradient(W/2,H*.42,20,W/2,H*.42,Math.max(W,H)*.65);
+  g.addColorStop(0,`hsl(${hue%360},70%,${28+pulse*14}%)`);g.addColorStop(1,"#120726");
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<5;i++){const a=beat*1.3+i*1.7;c.beginPath();c.fillStyle=`hsla(${(hue+i*60)%360},90%,65%,.5)`;
+    c.arc(W/2+Math.cos(a)*W*.32,H*.42+Math.sin(a)*H*.14,8+pulse*6,0,7);c.fill()}
+  const squ=1-punch*.22,str=1+punch*.3;punch=Math.max(0,punch-0.06*dt);
+  c.save();c.translate(W/2,H*.42+Math.sin(beat*Math.PI*2)*8);
+  c.scale(str,squ);c.font=(Math.min(W,H)*.26)+"px sans-serif";c.textAlign="center";c.textBaseline="middle";
+  c.fillText(run&&VERSES[vi]?VERSES[vi].a.e:"🎵",0,0);c.restore();
+  c.fillStyle="#ffffff18";c.beginPath();c.ellipse(W/2,H*.62,Math.min(W,H)*.2,14,0,0,7);c.fill();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+function noteBeat(){if(!run)return;punch=1;SFX.pop();setTimeout(noteBeat,600)}
+
+function showVerse(){
+  if(vi>=VERSES.length)return finish();
+  bar.textContent=T.verse(vi+1,VERSES.length)+"   ⭐ "+stars;
+  setupLyrics(VERSES[vi].text);
+  singText(VERSES[vi].text);
+}
+function singText(text){
+  singing=true;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang=SRLANG;u.rate=.85;
+  let fallbackTimer=null,usedBoundary=false;
+  u.onboundary=ev=>{if(ev.name&&ev.name!=="word")return;usedBoundary=true;
+    const before=text.slice(0,ev.charIndex);wi=before.trim().length?before.trim().split(" ").length:0;highlight(wi)};
+  u.onend=()=>{singing=false;if(fallbackTimer)clearTimeout(fallbackTimer);highlight(-1);promptSing()};
+  if(!("speechSynthesis" in window)){singing=false;promptSing();return}
+  try{speechSynthesis.speak(u)}catch(e){singing=false;promptSing();return}
+  mic.classList.remove("rdy");tapDone.classList.remove("rdy");
+  const estMs=Math.max(900,text.length*95);
+  fallbackTimer=setTimeout(()=>{
+    if(usedBoundary||!singing)return;
+    let i=0;const step=estMs/words.length;
+    const tick=()=>{if(!singing)return;highlight(i);i++;if(i<words.length)setTimeout(tick,step)};tick();
+  },300);
+}
+function promptSing(){mic.classList.add("rdy");tapDone.classList.add("rdy")}
+hear.onclick=()=>{if(run&&!singing)singText(VERSES[vi].text)};
+function completeVerse(){
+  if(!run||vi>=VERSES.length)return;
+  mic.classList.remove("rdy");tapDone.classList.remove("rdy");
+  stars++;SFX.good();confetti();burst(W/2,H*.42,26,[VERSES[vi].a.e,"⭐"]);
+  speak(T.bravo);bar.textContent=T.verse(vi+1,VERSES.length)+"   ⭐ "+stars;
+  vi++;setTimeout(showVerse,1600);
+}
+function finish(){
+  run=false;bar.textContent="";lyr.textContent="";
+  et.textContent="🏆 "+T.end(stars);speak(T.end(stars));if(stars>=6)confetti();
+  end.style.display="flex";
+}
+go.onclick=()=>{
+  unlockAudio();start.style.display="none";vi=0;stars=0;run=true;
+  noteBeat();showVerse();
+};
+again.onclick=()=>{end.style.display="none";start.style.display="flex"};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,live=false;
+if(!SRc)mic.style.display="none";
+tapDone.onclick=()=>{if(run)completeVerse()};
+mic.onclick=()=>{
+  if(!run||!SRc)return;
+  live=!live;mic.classList.toggle("on",live);if(live)listen();else try{rec.abort()}catch(e){}
+};
+function listen(){rec=new SRc();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{if(!run||vi>=VERSES.length)return;const n=" "+norm([...e.results].map(r=>r[0].transcript).join(" "))+" ";
+    const a=VERSES[vi].a;const hit=names(a).some(w=>n.includes(" "+w+" "))||n.includes(" "+norm(a.s)+" ");
+    if(hit){live=false;mic.classList.remove("on");try{rec.abort()}catch(x){}completeVerse()}};
+  rec.onend=()=>{if(live)setTimeout(listen,200)};try{rec.start()}catch(x){}}
+</script></body></html>
