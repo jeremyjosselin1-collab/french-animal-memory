@@ -39,37 +39,56 @@ function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add
 function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-const G=t("G"),R=8;let list,round,score,a,greet,step,lastG=null,rec=null,busy=false;
+const G=t("G"),R=8;let list,round,score,a,greet,step,lastG=null,rec=null,busy=false,grace=null,seen=0,live=false;
 const pad=s=>" "+norm(s).replace(/\bau revoir\b/g,"aurevoir")+" ";
 function start(){list=shuffle(ANIMALS);round=0;score=0;$("end").style.display="none";next()}
 function next(){
-  if(round>=R)return endScreen(t("b_end",score,R,localStorage.getItem("fr_current")||""));
+  if(round>=R){stopRec();return endScreen(t("b_end",score,R,localStorage.getItem("fr_current")||""))}
   a=list[round++];greet=lastG==null?(Math.random()<.5?"b":"r"):(lastG=="b"?"r":"b");lastG=greet;
-  step=1;busy=false;$("emo").textContent=a.e;pop($("emo"));$("score").textContent=t("b_animal",round,R,score);
+  step=1;busy=false;clearTimeout(grace);$("emo").textContent=a.e;pop($("emo"));$("score").textContent=t("b_animal",round,R,score);
   $("prompt").textContent=G[greet].p;$("tap").textContent=G[greet].tap;$("heard").textContent="";
   $("msg").textContent=SR?t("b_instr",G[greet].say):t("b_nomic");
   setTimeout(()=>speak(G[greet].p.replace(/[^\p{L} !¡']/gu,"")+" "+G[greet].say+" "+art(a)+a.w),300);
 }
-function soundStep(){step=2;$("prompt").textContent=t("b_sound",a);$("tap").textContent=t("b_tapSound");$("msg").textContent=t("b_eg",a.s);speak(t("b_now",a.s))}
-function done(){busy=true;score++;$("score").textContent=t("b_animal",round,R,score);$("msg").textContent=t("b_super");speak(t("b_superSay"));setTimeout(next,1500)}
+function gotGreeting(){step=2;$("prompt").textContent=t("b_sound",a);$("msg").textContent=t("b_eg",a.s);clearTimeout(grace);grace=setTimeout(()=>{if(step==2&&!busy)done()},4000)}
+function done(){if(busy)return;busy=true;step=3;clearTimeout(grace);score++;$("score").textContent=t("b_animal",round,R,score);$("msg").textContent=t("b_super");pauseRec();speak(t("b_superSay"));setTimeout(()=>{next();if(live)resumeRec()},1700)}
 function has(n,g){return G[g].ok.some(w=>n.includes(" "+w+" "))}
 function check(x){
-  const n=pad(x);if(step==2){if(n.trim())done();return}
-  const other=greet=="b"?"r":"b",want=has(n,greet),wrong=has(n,other),hasName=names(a).some(w=>n.includes(" "+w+" "));
+  const n=pad(x);if(step!=1)return false;
+  const other=greet=="b"?"r":"b",want=has(n,greet),wrong=has(n,other),nm=names(a).some(w=>n.includes(" "+w+" "));
   const full=G[greet].say+" "+art(a)+a.w;
-  if(want&&hasName)soundStep();
-  else if(wrong&&!want)$("msg").textContent=t("b_other",G[greet].say,G[other].say);
+  if(want&&nm){gotGreeting();return true}
+  if(wrong&&!want)$("msg").textContent=t("b_other",G[greet].say,G[other].say);
   else if(want)$("msg").textContent=t("b_addName",full);
-  else $("msg").textContent=t("b_retry",full);
+  return false;
 }
+function words(x){return norm(x).split(" ").filter(Boolean).length}
+function startRec(){
+  rec=new SR();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=3;seen=0;
+  rec.onresult=e=>{
+    if(busy)return;
+    const all=[...e.results].map(r=>r[0].transcript).join(" ");$("heard").textContent=t("heard",all.trim());
+    if(step==1){
+      const alts=[all,...[...e.results].flatMap(r=>[...r].map(x=>x.transcript))];
+      if(alts.some(check)){seen=words(all);const rest=pad(all).split(" "+names(a)[0]+" ").slice(1).join(" ");if(words(rest)>0)done()}
+    }else if(step==2){
+      const rest=pad(all).split(" "+names(a)[0]+" ").slice(1).join(" ");
+      if(words(all)>seen||words(rest)>0)done();
+    }
+  };
+  rec.onerror=e=>{if(e.error=="not-allowed"||e.error=="service-not-allowed"){live=false;ui();$("heard").textContent=t("allowMic")}};
+  rec.onend=()=>{if(live&&!busy)setTimeout(()=>{if(live&&!busy)try{startRec()}catch(x){}},200)};
+  try{rec.start()}catch(x){}
+}
+function pauseRec(){try{rec&&rec.abort()}catch(x){}rec=null}
+function resumeRec(){if(live&&!rec)startRec();$("heard").textContent=t("listening")}
+function stopRec(){live=false;pauseRec();ui()}
+function ui(){$("mic").textContent=live?t("stop"):t("talk");$("mic").classList.toggle("on",live)}
 $("mic").onclick=()=>{
-  if(!SR){$("msg").textContent=t("b_nomic");return}if(busy)return;try{rec&&rec.abort()}catch(e){}
-  rec=new SR();rec.lang=SRLANG;rec.interimResults=false;rec.maxAlternatives=5;$("mic").classList.add("on");$("heard").textContent=t("listening");
-  rec.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);$("heard").textContent=t("heard",alts[0]);const s0=step;for(const x of alts){check(x);if(step!=s0||busy)break}};
-  rec.onerror=e=>{$("heard").textContent=e.error=="not-allowed"?t("allowMic"):(step==2&&e.error=="no-match"?"":t("nothing"));if(step==2&&e.error=="no-match"&&!busy)done()};
-  rec.onend=()=>$("mic").classList.remove("on");try{rec.start()}catch(e){}
+  if(!SR){$("msg").textContent=t("b_nomic");return}
+  if(live){stopRec();return}live=true;ui();$("heard").textContent=t("listening");startRec();
 };
-$("tap").onclick=()=>{if(busy)return;step==1?soundStep():done()};
-$("hear").onclick=()=>step==1?speak(G[greet].say+" "+art(a)+a.w):speak(a.s);$("again").onclick=start;start();
+$("tap").onclick=()=>{if(!busy)done()};
+$("hear").onclick=()=>speak(G[greet].say+" "+art(a)+a.w+"... "+a.s);$("again").onclick=()=>{start()};start();
 </script>
 </body></html>
