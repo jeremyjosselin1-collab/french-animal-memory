@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Dis bonjour !</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff3e0;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+button.say{background:#0984e3}
+.big{font-size:7rem;line-height:1.2}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
+.opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
+.opt.e{font-size:4rem;padding:8px}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}
+#msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
+#score{font-size:1.2rem;font-weight:bold}
+#end{display:none;position:fixed;inset:0;background:inherit;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
+#prompt{font-size:2rem;font-weight:bold;color:#6c5ce7;margin:6px}#heard{min-height:1.4em;color:#636e72}button.tap{background:#fdcb6e;color:#333}button.on{background:#d63031}
+</style></head><body>
+<a class="menu" href="./">🏠 Menu</a>
+<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
+<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
+<h1>Dis bonjour !</h1>
+<div id="score"></div>
+<div class="big" id="emo"></div>
+<div id="prompt"></div>
+<button class="say" id="hear">🔊 Écouter</button>
+<button id="mic">🎤 Parler</button><br>
+<button class="tap" id="tap"></button>
+<div id="heard"></div><div id="msg"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again">Rejouer</button><a class="menu" href="./">🏠 Menu</a></div>
+<script>
+const ANIMALS=[{w:"canard",e:"🦆",g:"m",pl:"canards",s:"coin-coin"},{w:"chien",e:"🐶",g:"m",pl:"chiens",s:"ouaf ouaf"},{w:"chat",e:"🐱",g:"m",pl:"chats",s:"miaou"},{w:"lapin",e:"🐰",g:"m",pl:"lapins",s:"grignote"},{w:"éléphant",e:"🐘",g:"m",pl:"éléphants",s:"pouêt"},{w:"girafe",e:"🦒",g:"f",pl:"girafes",s:"mmm"},{w:"zèbre",e:"🦓",g:"m",pl:"zèbres",s:"hihan"},{w:"singe",e:"🐵",g:"m",pl:"singes",s:"hou hou ha ha"},{w:"ours",e:"🐻",g:"m",pl:"ours",s:"grrr"},{w:"tigre",e:"🐯",g:"m",pl:"tigres",s:"grrraou"}];
+const $=id=>document.getElementById(id);
+const TTS="speechSynthesis" in window;
+function speak(t){if(!TTS)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function art(a){return /^[aeiouyéè]/i.test(a.w)?"l'":(a.g=="f"?"la ":"le ")}
+function un(a){return a.g=="f"?"une ":"un "}
+function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak("Bravo !")}
+</script>
+<script>
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]+/g," ").trim();
+const R=8;let list,round,score,a,greet,step,lastG=null,rec=null,busy=false;
+const G={b:{say:"bonjour",p:"Dis bonjour ! 👋",tap:"👋 J'ai dit bonjour"},r:{say:"au revoir",p:"Dis au revoir ! 👋🚪",tap:"👋🚪 J'ai dit au revoir"}};
+function names(x){const n=norm(x.w);return x.w=="girafe"?[n,"giraffe"]:[n]}
+function start(){list=shuffle(ANIMALS);round=0;score=0;$("end").style.display="none";next()}
+function next(){
+  if(round>=R)return endScreen(score+" / "+R+" ! Bravo "+(localStorage.getItem("fr_current")||"")+" !");
+  a=list[round++];
+  greet=lastG==null?(Math.random()<.5?"b":"r"):(Math.random()<.75?(lastG=="b"?"r":"b"):lastG);lastG=greet;
+  step=1;busy=false;$("emo").textContent=a.e;pop($("emo"));$("score").textContent="Animal "+round+" / "+R+" · ⭐ "+score;
+  $("prompt").textContent=G[greet].p;$("tap").textContent=G[greet].tap;$("heard").textContent="";
+  $("msg").textContent=SR?"Dis "+G[greet].say+" + le nom de l'animal !":"Micro non disponible ici, essaie Chrome ou Safari. Tape sur le bouton jaune quand tu l'as dit.";
+  setTimeout(()=>speak(G[greet].p.replace(/[^\p{L} !']/gu,"")+" "+G[greet].say+" "+art(a)+a.w),300);
+}
+function hearIt(){if(step==1)speak(G[greet].say+" "+art(a)+a.w);else speak(a.s)}
+function soundStep(){step=2;$("prompt").textContent="Fais le bruit "+(a.g=="f"?"de la ":/^[aeiouyé]/.test(a.w)?"de l'":"du ")+a.w+" ! 🔊";$("tap").textContent="🔊 J'ai fait le bruit";$("msg").textContent="Par exemple : « "+a.s+" »";speak("Bravo ! Maintenant fais le bruit ! "+a.s)}
+function done(){busy=true;score++;$("score").textContent="Animal "+round+" / "+R+" · ⭐ "+score;$("msg").textContent="✅ Super !";speak("Super !");setTimeout(next,1500)}
+function check(t){
+  const n=" "+norm(t).replace("au revoir","aurevoir")+" ";
+  if(step==2){if(n.trim())done();return}
+  const hasB=/ bonjour /.test(n)||/ bonjour/.test(n),hasR=/ aurevoir/.test(n),want=greet=="b"?hasB:hasR,other=greet=="b"?hasR:hasB;
+  const hasName=names(a).some(w=>n.includes(" "+w+" "));
+  if(want&&hasName)soundStep();
+  else if(other&&!want)$("msg").textContent="Presque ! Cette fois dis « "+G[greet].say+" », pas « "+G[greet=="b"?"r":"b"].say+" » 😊";
+  else if(want)$("msg").textContent="Bien ! Ajoute le nom : « "+G[greet].say+" "+art(a)+a.w+" »";
+  else $("msg").textContent="Essaie encore : « "+G[greet].say+" "+art(a)+a.w+" »";
+}
+$("mic").onclick=()=>{
+  if(!SR){$("msg").textContent="Micro non disponible ici, essaie Chrome ou Safari. Tape sur le bouton jaune.";return}
+  if(busy)return;try{rec&&rec.abort()}catch(e){}
+  rec=new SR();rec.lang="fr-FR";rec.interimResults=false;rec.maxAlternatives=5;
+  $("mic").classList.add("on");$("heard").textContent="J'écoute… 👂";
+  rec.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);$("heard").textContent="J'ai entendu : « "+alts[0]+" »";
+    const s0=step;for(const t of alts){check(t);if(step!=s0||busy)break}};
+  rec.onerror=e=>{$("heard").textContent=e.error=="not-allowed"?"Autorise le micro dans le navigateur.":(step==2&&e.error=="no-match"?"":"Je n'ai rien entendu, réessaie.");if(step==2&&e.error=="no-match"&&!busy)done()};
+  rec.onend=()=>$("mic").classList.remove("on");
+  try{rec.start()}catch(e){}
+};
+$("tap").onclick=()=>{if(busy)return;step==1?soundStep():done()};
+$("hear").onclick=hearIt;$("again").onclick=start;start();
+</script>
+</body></html>
