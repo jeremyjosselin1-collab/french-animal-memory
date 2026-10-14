@@ -47,12 +47,14 @@ const KIDS=["Mateo","Felipe"],COL={Mateo:"#0984e3",Felipe:"#e17055"};
 const GAMES=[["memoire.html","🃏","gMemoire","#6c5ce7,#a29bfe"],["repete.html","🦆","gRepete","#00b894,#55efc4"],["ecoute.html","👂","gEcoute","#0984e3,#74b9ff"],["rapide.html","⚡","gRapide","#e84393,#fd79a8"],["lettres.html","🔤","gLettres","#00b894,#badc58"],["histoire.html","📖","gHistoire","#f39c12,#fdcb6e"],["combien.html","🔢","gCombien","#6c5ce7,#81ecec"],["bonjour.html","👋","gBonjour","#e17055,#fab1a0"]];
 const $=id=>document.getElementById(id),photo=n=>localStorage.getItem("fr_photo_"+n);
 let target=null;
+const LN=LANG=="es"?"Spanish":"French";
+const EN={gMemoire:"Find the pairs and say the name in "+LN+"!",gRepete:"Repeat the word 10 times to make the animal fly away",gEcoute:"Listen and tap the right animal",gRapide:"Find the right name before time runs out",gLettres:"Fill in the missing letters",gHistoire:"Make up a silly sentence in "+LN,gCombien:"Count the animals in "+LN,gBonjour:"Say hello or goodbye to the animal, then make its sound"};
 header();document.title=t("games").replace("🐾 ","");
 const other=LANG=="es"?"fr":"es";
 [$("langBtn"),$("langBtn2")].forEach(b=>{b.textContent=S[LANG].lang+" ⇄ "+S[other].lang.split(" ")[0];b.onclick=()=>setLang(other)});
 document.querySelectorAll(".lang").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
 GAMES.forEach(([h,e,k,c])=>{const a=document.createElement("a");a.className="game";a.href=h;a.style.background=`linear-gradient(135deg,${c})`;
-  a.innerHTML=`<span>${e}</span>${t(k)[0]}<small>${t(k)[1]}</small>`;$("gg").appendChild(a)});
+  a.innerHTML=`<span>${e}</span>${t(k)[0]}<small>${EN[k]}</small>`;$("gg").appendChild(a)});
 function show(id){["langs","pick","games"].forEach(x=>$(x).style.display=x==id?"block":"none")}
 function avatar(n,el){const p=photo(n);el.style.backgroundColor=COL[n];el.style.backgroundImage=p?`url(${p})`:"";el.textContent=p?"":n[0]}
 function renderPick(){
