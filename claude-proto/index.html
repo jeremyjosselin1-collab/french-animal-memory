@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototypes Claude</title><link rel="icon" href="data:,"><script src="../i18n.js"></script>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#0f0b26;color:#fff;text-align:center;padding:16px}h1{margin:10px 0 4px}p{opacity:.8}
+a.c{display:block;max-width:440px;margin:14px auto;padding:22px;border-radius:22px;color:#fff;text-decoration:none;font-size:1.5rem;font-weight:bold;box-shadow:0 6px 20px #0006}
+a.c span{font-size:3rem;display:block}small{display:block;font-weight:normal;font-size:1rem;margin-top:6px}.back{color:#c7d2fe}
+#credits{max-width:480px;margin:28px auto 0;font-size:.78rem;opacity:.65;text-align:left}
+#credits a{color:#a5b4fc}</style></head><body>
+<a class="back" href="../">⬅ Menu</a>
+<h1>🧪 Prototypes Claude</h1><p>Rough experiments, real video motion.</p>
+<a class="c" style="background:linear-gradient(135deg,#8e44ad,#3498db)" href="video.html"><span>🎬</span><b id="t1"></b><small>Watch a real animal video clip and name the animal before it comes into focus</small></a>
+<a class="c" style="background:linear-gradient(135deg,#00b894,#55efc4)" href="course.html"><span>🏃</span><b id="t2"></b><small>3D endless runner: say or tap the right word to jump the obstacle</small></a>
+<a class="c" style="background:linear-gradient(135deg,#e84393,#fdcb6e)" href="karaoke.html"><span>🎤</span><b id="t3"></b><small>Karaoke song built from each animal's sound, sing along to score stars</small></a>
+<div id="credits"><p id="cr"></p></div>
+<script>const es=LANG=="es";
+t1.textContent=es?"Video misterioso":"Vidéo mystère";
+t2.textContent=es?"La carrera loca":"La course folle";
+t3.textContent=es?"Cantá con los animales":"Chante avec les animaux";
+cr.innerHTML=es?"Los videos de animales son de <a href=\"https://commons.wikimedia.org/\" target=\"_blank\" rel=\"noopener\">Wikimedia Commons</a>, con licencia libre (CC0 / CC BY / CC BY-SA). El crédito del autor aparece en el juego de video.":"Les vidéos d'animaux viennent de <a href=\"https://commons.wikimedia.org/\" target=\"_blank\" rel=\"noopener\">Wikimedia Commons</a>, sous licence libre (CC0 / CC BY / CC BY-SA). Le crédit de l'auteur apparaît dans le jeu vidéo.";
+</script>
+</body></html>
