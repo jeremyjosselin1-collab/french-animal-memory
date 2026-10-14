@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Course éclair !</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff0f6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+button.say{background:#0984e3}
+.big{font-size:7rem;line-height:1.2}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
+.opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
+.opt.e{font-size:4rem;padding:8px}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}
+#msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
+#score{font-size:1.2rem;font-weight:bold}
+#end{display:none;position:fixed;inset:0;background:inherit;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
+#timer{font-size:2rem;font-weight:bold;color:#d63031}
+</style></head><body>
+<a class="menu" href="./">🏠 Menu</a>
+<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
+<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
+<h1>Course éclair !</h1>
+
+<div id="timer">⏱ 45</div><div id="score"></div>
+<div class="big" id="emo">⚡</div>
+<div id="msg"></div>
+<button id="go">▶️ C'est parti !</button>
+<div class="grid" id="opts"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again">Rejouer</button><a class="menu" href="./">🏠 Menu</a></div>
+<script>
+const ANIMALS=[{w:"canard",e:"🦆",g:"m",pl:"canards",s:"coin-coin"},{w:"chien",e:"🐶",g:"m",pl:"chiens",s:"ouaf ouaf"},{w:"chat",e:"🐱",g:"m",pl:"chats",s:"miaou"},{w:"lapin",e:"🐰",g:"m",pl:"lapins",s:"grignote"},{w:"éléphant",e:"🐘",g:"m",pl:"éléphants",s:"pouêt"},{w:"girafe",e:"🦒",g:"f",pl:"girafes",s:"mmm"},{w:"zèbre",e:"🦓",g:"m",pl:"zèbres",s:"hihan"},{w:"singe",e:"🐵",g:"m",pl:"singes",s:"hou hou ha ha"},{w:"ours",e:"🐻",g:"m",pl:"ours",s:"grrr"},{w:"tigre",e:"🐯",g:"m",pl:"tigres",s:"grrraou"}];
+const $=id=>document.getElementById(id);
+const TTS="speechSynthesis" in window;
+function speak(t){if(!TTS)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function art(a){return /^[aeiouyéè]/i.test(a.w)?"l'":(a.g=="f"?"la ":"le ")}
+function un(a){return a.g=="f"?"une ":"un "}
+function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak("Bravo !")}
+</script>
+<script>
+let t,score,timer,cur,run=false;
+function start(){score=0;t=45;run=true;$("end").style.display="none";$("go").style.display="none";$("msg").textContent="Touche le bon nom, vite !";tick();timer=setInterval(tick,1000);next()}
+function tick(){$("timer").textContent="⏱ "+t;if(t--<=0){clearInterval(timer);run=false;$("opts").innerHTML="";$("go").style.display="inline-block";endScreen("Score : "+score+" ⭐")}}
+function next(){
+  const opts=shuffle(ANIMALS).slice(0,4);cur=opts[Math.floor(Math.random()*4)];
+  const e=$("emo");e.textContent=cur.e;pop(e);$("score").textContent="⭐ "+score;
+  const g=$("opts");g.innerHTML="";
+  opts.forEach(a=>{const b=document.createElement("button");b.className="opt";b.textContent=a.w;b.onclick=()=>pick(b,a);g.appendChild(b)});
+}
+function pick(b,a){if(!run)return;if(a===cur){score++;speak(a.w);next()}else{b.classList.add("no");t=Math.max(0,t-2);$("msg").textContent="Oups ! C'est "+art(cur)+cur.w+" (moins 2 secondes)"}}
+$("go").onclick=start;$("again").onclick=()=>{$("end").style.display="none";start()};
+</script>
+</body></html>
