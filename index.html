@@ -18,6 +18,7 @@ small{display:block;font-size:1rem;font-weight:normal;margin-top:6px}
 #head{display:flex;align-items:center;justify-content:center;gap:12px;font-size:1.5rem;font-weight:bold}
 #head .av{width:64px;height:64px;font-size:1.8rem;margin:0}
 #games{display:none}
+#gg{display:grid;grid-template-columns:1fr;max-width:900px;margin:auto}@media(min-width:700px){#gg{grid-template-columns:1fr 1fr}}#gg .game{width:auto;margin:8px}
 a.sw{color:#6c5ce7;font-size:1.1rem}
 </style></head><body>
 <div id="pick">
@@ -28,8 +29,15 @@ a.sw{color:#6c5ce7;font-size:1.1rem}
 <div id="head"></div>
 <a class="sw" href="#" id="switch">Changer de joueur</a>
 <h1>🐾 Jeux des animaux</h1>
+<div id="gg">
 <a class="game m" href="memoire.html"><span>🃏</span>Memory des animaux<small>Trouve les paires et dis le nom !</small></a>
 <a class="game r" href="repete.html"><span>🦆</span>Dis-le 10 fois !<small>Répète le mot pour faire envoler l'animal</small></a>
+<a class="game" style="background:linear-gradient(135deg,#0984e3,#74b9ff)" href="ecoute.html"><span>👂</span>Écoute et touche !<small>Écoute le mot et touche le bon animal</small></a>
+<a class="game" style="background:linear-gradient(135deg,#e84393,#fd79a8)" href="rapide.html"><span>⚡</span>Course éclair !<small>Trouve le bon nom avant la fin du temps</small></a>
+<a class="game" style="background:linear-gradient(135deg,#00b894,#badc58)" href="lettres.html"><span>🔤</span>Les lettres cachées<small>Trouve les lettres qui manquent</small></a>
+<a class="game" style="background:linear-gradient(135deg,#f39c12,#fdcb6e)" href="histoire.html"><span>📖</span>Histoires rigolotes<small>Invente une phrase drôle en français</small></a>
+<a class="game" style="background:linear-gradient(135deg,#6c5ce7,#81ecec)" href="combien.html"><span>🔢</span>Combien ?<small>Compte les animaux en français</small></a>
+</div>
 </div>
 <input type="file" id="file" accept="image/*" style="display:none">
 <script>
