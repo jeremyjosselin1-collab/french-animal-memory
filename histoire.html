@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Histoires rigolotes</title>
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:system-ui,sans-serif;background:#fffbe6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
 .menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
 h1{font-size:1.6rem;margin:6px 0}
 button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
-button.say{background:#0984e3}
+button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on{background:#d63031}
 .big{font-size:7rem;line-height:1.2}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
 .opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
@@ -16,42 +18,34 @@ button.say{background:#0984e3}
 .ok{background:#55efc4!important}.no{background:#fab1a0!important}
 #msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
 #score{font-size:1.2rem;font-weight:bold}
-#end{display:none;position:fixed;inset:0;background:inherit;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+#end{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
 .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
 .row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:6px auto;max-width:560px}.row button{background:#fff;color:#333;box-shadow:0 2px 6px #0002;margin:0;padding:10px 12px;font-size:1.2rem}.row button.sel{outline:4px solid #6c5ce7}#scene{font-size:5rem;min-height:1.3em}#sent{font-size:1.8rem;font-weight:bold;color:#6c5ce7;min-height:1.4em;margin:6px}h3{margin:10px 0 2px}
 </style></head><body>
-<a class="menu" href="./">🏠 Menu</a>
-<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
-<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
-<h1>Histoires rigolotes</h1>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gHistoire" data-i="0"></h1>
 
 <div id="scene">❓</div><div id="sent"></div>
-<button class="say" id="read">🔊 Lire l'histoire</button> <button id="rand">🎲 Au hasard</button>
-<h3>1. Un animal</h3><div class="row" id="ra"></div>
-<h3>2. Une couleur</h3><div class="row" id="rc"></div>
-<h3>3. Il fait quoi ?</h3><div class="row" id="rv"></div><div id="msg"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again">Rejouer</button><a class="menu" href="./">🏠 Menu</a></div>
+<button class="say" id="read" data-t="h_read"></button> <button id="rand" data-t="h_rand"></button>
+<h3 data-t="h_1"></h3><div class="row" id="ra"></div><h3 data-t="h_2"></h3><div class="row" id="rc"></div><h3 data-t="h_3"></h3><div class="row" id="rv"></div><div id="msg"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again" data-t="again"></button><a class="menu" href="./" data-t="menu"></a></div>
 <script>
-const ANIMALS=[{w:"canard",e:"🦆",g:"m",pl:"canards",s:"coin-coin"},{w:"chien",e:"🐶",g:"m",pl:"chiens",s:"ouaf ouaf"},{w:"chat",e:"🐱",g:"m",pl:"chats",s:"miaou"},{w:"lapin",e:"🐰",g:"m",pl:"lapins",s:"grignote"},{w:"éléphant",e:"🐘",g:"m",pl:"éléphants",s:"pouêt"},{w:"girafe",e:"🦒",g:"f",pl:"girafes",s:"mmm"},{w:"zèbre",e:"🦓",g:"m",pl:"zèbres",s:"hihan"},{w:"singe",e:"🐵",g:"m",pl:"singes",s:"hou hou ha ha"},{w:"ours",e:"🐻",g:"m",pl:"ours",s:"grrr"},{w:"tigre",e:"🐯",g:"m",pl:"tigres",s:"grrraou"}];
+header();document.title=document.querySelector("h1").textContent;
 const $=id=>document.getElementById(id);
-const TTS="speechSynthesis" in window;
-function speak(t){if(!TTS)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function art(a){return /^[aeiouyéè]/i.test(a.w)?"l'":(a.g=="f"?"la ":"le ")}
-function un(a){return a.g=="f"?"une ":"un "}
 function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
-function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak("Bravo !")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-const COLS=[["bleu","bleue","🔵"],["rouge","rouge","🔴"],["vert","verte","🟢"],["jaune","jaune","🟡"],["rose","rose","🩷"],["violet","violette","🟣"]];
-const ACTS=[["danse","💃"],["chante","🎤"],["saute","🦘"],["dort","😴"],["mange une glace","🍦"],["fait du vélo","🚲"],["joue au foot","⚽"],["rigole","😂"]];
-let A=null,C=null,V=null;
+const COLS=t("COLS"),ACTS=t("ACTS");let A=null,C=null,V=null;
 function row(id,items,lab,set){const r=$(id);items.forEach(it=>{const b=document.createElement("button");b.textContent=lab(it);b.onclick=()=>{[...r.children].forEach(x=>x.classList.remove("sel"));b.classList.add("sel");set(it);upd()};r.appendChild(b)})}
 row("ra",ANIMALS,a=>a.e+" "+a.w,v=>A=v);row("rc",COLS,c=>c[2]+" "+c[0],v=>C=v);row("rv",ACTS,v=>v[1]+" "+v[0],v=>V=v);
-function sentence(){if(!A)return"";const cap=s=>s[0].toUpperCase()+s.slice(1);let s=cap(art(A))+A.w;if(C)s+=" "+(A.g=="f"?C[1]:C[0]);if(V)s+=" "+V[0];return s+(V?" !":"")}
+function sentence(){if(!A)return"";const cap=s=>s[0].toUpperCase()+s.slice(1);let s=cap(art(A))+A.w;if(C)s+=" "+(A.g=="f"?C[1]:C[0]);if(V)s+=" "+V[0];if(!V)return s;return LANG=="es"?"¡"+s+"!":s+" !"}
 function upd(){$("sent").textContent=sentence();$("scene").textContent=(A?A.e:"❓")+(C?C[2]:"")+(V?V[1]:"");pop($("scene"));if(A&&C&&V)speak(sentence())}
-$("read").onclick=()=>{if(A)speak(sentence());else $("msg").textContent="Choisis d'abord un animal !"};
+$("read").onclick=()=>{if(A)speak(sentence());else $("msg").textContent=t("h_first")};
 $("rand").onclick=()=>{["ra","rc","rv"].forEach(id=>{const r=$(id).children;r[Math.floor(Math.random()*r.length)].click()})};
-if(!TTS)$("msg").textContent="Pas de son sur cet appareil, mais tu peux lire ton histoire !";
-$("again").onclick=()=>$("end").style.display="none";
+if(!TTS)$("msg").textContent=t("h_notts");$("again").onclick=()=>$("end").style.display="none";
 </script>
 </body></html>
