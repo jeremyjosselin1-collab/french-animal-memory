@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Le marché</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="fx.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none}canvas#g{display:block;width:100vw;height:100vh}
+#hud{position:fixed;top:56px;left:0;right:0;text-align:center;pointer-events:none}#ask{display:inline-block;background:#fff;padding:10px 18px;border-radius:18px;font:700 1.5rem system-ui;box-shadow:0 4px 12px #0003}
+#sc{color:#fff;font:700 1.2rem system-ui;text-shadow:0 2px 4px #0008;margin-top:6px}
+#bar{position:fixed;bottom:12px;right:12px;display:flex;gap:8px;z-index:60}#bar button{border:0;border-radius:16px;padding:12px 16px;font:700 1.1rem system-ui;background:#0984e3;color:#fff;box-shadow:0 3px 8px #0004}#bar button.on{background:#d63031}
+#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0007;z-index:70}#start button{font:800 2rem system-ui;padding:20px 34px;border:0;border-radius:24px;background:#00b894;color:#fff}</style></head><body>
+<canvas id="g"></canvas><div id="hud"><div id="ask"></div><div id="sc"></div></div>
+<div id="bar"><button id="rep">🔊</button><button id="mic">🎤</button></div>
+<div id="start"><button id="go">▶</button></div>
+<script>
+langBar();
+const es=LANG=="es";
+const ITEMS=es?[["manzana","🍎","f"],["banana","🍌","f"],["frutilla","🍓","f"],["zanahoria","🥕","f"],["tomate","🍅","m"],["queso","🧀","m"],["pan","🍞","m"],["pescado","🐟","m"],["uva","🍇","f"],["limón","🍋","m"]].map(([w,e,g])=>({w,e,g}))
+ :[["pomme","🍎","f"],["banane","🍌","f"],["fraise","🍓","f"],["carotte","🥕","f"],["tomate","🍅","f"],["fromage","🧀","m"],["pain","🍞","m"],["poisson","🐟","m"],["raisin","🍇","m"],["citron","🍋","m"]].map(([w,e,g])=>({w,e,g}));
+const T={ask:i=>es?`¡Buscá ${art(i)}${i.w}!`:`Trouve ${art(i)}${i.w} !`,yes:i=>es?`¡Muy bien! ${art(i)}${i.w}`:`Bravo ! ${art(i)}${i.w}`,no:i=>es?`No, eso es ${art(i)}${i.w}`:`Non, ça c'est ${art(i)}${i.w}`,win:es?"¡Llenaste la canasta!":"Ton panier est plein !",score:(n,m)=>`🧺 ${n} / ${m}`};
+const cv=g,c=cv.getContext("2d");let W,H;function rs(){W=innerWidth;H=innerHeight;cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}rs();addEventListener("resize",rs);
+let scroll=0,speed=1.4,stalls=[],flying=[],target=null,score=0,GOAL=8,run=false,jump=0,shake=0,t0=0;
+const STALLW=260,COLS=["#e17055","#0984e3","#00b894","#fdcb6e","#6c5ce7"];
+function stallAt(i){if(!stalls[i]){const its=[];const pool=ITEMS.slice().sort(()=>Math.random()-.5);for(let k=0;k<3;k++)its.push({...pool[k],k,got:false});stalls[i]={its,col:COLS[i%COLS.length]}}return stalls[i]}
+function itemPos(i,k){const sx=i*STALLW-scroll+W*.35;return{x:sx+40+k*65,y:H*.62-18}}
+function visible(){const out=[];const a=Math.floor((scroll-W*.35)/STALLW)-1;for(let i=Math.max(0,a);i<a+Math.ceil(W/STALLW)+3;i++){const s=stallAt(i);s.its.forEach(it=>{if(it.got)return;const p=itemPos(i,it.k);out.push({it,p,i})})}return out}
+function pick(){const v=visible().filter(o=>o.p.x>W*.45&&o.p.x<W*.95);if(!v.length){target=null;return}const o=v[Math.floor(Math.random()*v.length)];target=o.it.w;ask.textContent=T.ask(o.it);speak(T.ask(o.it))}
+function draw(ts){
+  const dt=Math.min(3,(ts-(t0||ts))/16.7);t0=ts;
+  if(run){scroll+=speed*dt;if(!target||!visible().some(o=>o.it.w==target&&o.p.x>40))pick()}
+  const sk=shake>0?(Math.random()-.5)*shake:0;shake*=.85;
+  c.save();c.translate(sk,0);
+  const sky=c.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#74b9ff");sky.addColorStop(1,"#dff9fb");c.fillStyle=sky;c.fillRect(0,0,W,H);
+  c.font="48px sans-serif";for(let i=0;i<5;i++){const x=((i*300-scroll*.2)%(W+300)+W+300)%(W+300)-150;c.fillText("☁️",x,80+i%2*50)}
+  c.fillStyle="#b2bec3";c.fillRect(0,H*.7,W,H*.3);c.fillStyle="#636e72";for(let x=-((scroll)%80);x<W;x+=80)c.fillRect(x,H*.7+30,40,6);
+  const a=Math.floor((scroll-W*.35)/STALLW)-1;
+  for(let i=Math.max(0,a);i<a+Math.ceil(W/STALLW)+3;i++){const s=stallAt(i),sx=i*STALLW-scroll+W*.35;
+    c.fillStyle="#8d6e63";c.fillRect(sx+10,H*.62,210,H*.08+4);c.fillRect(sx+16,H*.4,8,H*.22);c.fillRect(sx+206,H*.4,8,H*.22);
+    for(let k=0;k<6;k++){c.fillStyle=k%2?"#fff":s.col;c.beginPath();c.moveTo(sx+10+k*35,H*.4);c.lineTo(sx+45+k*35,H*.4);c.lineTo(sx+45+k*35,H*.45);c.arc(sx+27.5+k*35,H*.45,17.5,0,Math.PI);c.fill()}
+    c.font="44px sans-serif";c.textAlign="center";s.its.forEach(it=>{if(it.got)return;const p=itemPos(i,it.k);const bob=Math.sin(ts/300+it.k+i)*3;
+      if(it.w==target){c.save();c.shadowColor="#ffeaa7";c.shadowBlur=20+Math.sin(ts/150)*10;c.fillText(it.e,p.x,p.y+bob);c.restore()}else c.fillText(it.e,p.x,p.y+bob)})}
+  const kx=W*.18,ky=H*.7-6-Math.max(0,Math.sin(jump)*60);if(jump>0){jump+=.15*dt;if(jump>Math.PI)jump=0}
+  c.font="64px sans-serif";c.textAlign="center";c.save();c.translate(kx,ky);c.rotate(run?Math.sin(ts/120)*.08:0);c.fillText("🧒",0,0);c.restore();
+  c.font="52px sans-serif";c.fillText("🧺",kx+50,H*.7-4);
+  flying=flying.filter(f=>{f.t+=.03*dt;const u=Math.min(1,f.t),x=(1-u)*(1-u)*f.x0+2*(1-u)*u*((f.x0+kx)/2)+u*u*(kx+50),y=(1-u)*(1-u)*f.y0+2*(1-u)*u*(Math.min(f.y0,H*.3)-80)+u*u*(H*.7-30);
+    c.font=(44-u*16)+"px sans-serif";c.fillText(f.e,x,y);if(u>=1){burst(kx+50,H*.7-30,25,[f.e,"⭐"]);SFX.pop();return false}return true});
+  c.restore();requestAnimationFrame(draw);
+}
+function collect(o){o.it.got=true;flying.push({e:o.it.e,x0:o.p.x,y0:o.p.y,t:0});SFX.whoosh();SFX.good();jump=.01;score++;sc.textContent=T.score(score,GOAL);
+  burst(o.p.x,o.p.y,20);speak(T.yes(o.it));target=null;ask.textContent="✅";
+  if(score>=GOAL){run=false;setTimeout(()=>{confetti();ask.textContent="🏆 "+T.win;speak(T.win)},900)}else setTimeout(()=>{if(run)pick()},1400)}
+cv.addEventListener("pointerdown",e=>{if(!run)return;const v=visible();let best=null,bd=40;for(const o of v){const d=Math.hypot(o.p.x-e.clientX,o.p.y-14-e.clientY);if(d<bd){bd=d;best=o}}
+  if(!best)return;if(best.it.w==target)collect(best);else{SFX.bad();shake=12;ask.textContent="❌ "+T.no(best.it);speak(T.no(best.it))}});
+go.onclick=()=>{unlockAudio();start.style.display="none";run=true;score=0;sc.textContent=T.score(0,GOAL);pick()};
+rep.onclick=()=>{const it=ITEMS.find(i=>i.w==target);if(it)speak(T.ask(it))};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,live=false;
+if(!SRc)mic.style.display="none";
+mic.onclick=()=>{live=!live;mic.classList.toggle("on",live);if(live)listen();else try{rec.abort()}catch(e){}};
+function listen(){rec=new SRc();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{const n=" "+norm([...e.results].map(r=>r[0].transcript).join(" "))+" ";if(target&&n.includes(" "+norm(target)+" ")){const o=visible().find(o=>o.it.w==target);if(o){collect(o);try{rec.abort()}catch(x){}}}};
+  rec.onend=()=>{if(live)setTimeout(listen,200)};try{rec.start()}catch(x){}}
+requestAnimationFrame(draw);
+</script></body></html>
