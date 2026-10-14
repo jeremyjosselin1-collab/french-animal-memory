@@ -3,15 +3,74 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Jeux des animaux</title>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
-h1{font-size:2rem;margin:0 0 20px}
-a{display:block;width:min(90vw,420px);margin:12px;padding:26px 16px;border-radius:24px;color:#fff;text-decoration:none;font-size:1.6rem;font-weight:bold;box-shadow:0 5px 14px #0003}
-a span{display:block;font-size:3.5rem}
-.m{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
-.r{background:linear-gradient(135deg,#00b894,#55efc4)}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;padding:16px;box-sizing:border-box}
+h1{font-size:2rem;margin:10px 0 20px}
+.row{display:flex;flex-wrap:wrap;justify-content:center;gap:18px}
+.prof{background:#fff;border-radius:24px;padding:18px;width:min(42vw,220px);min-width:150px;box-shadow:0 5px 14px #0002}
+.av{width:120px;height:120px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:3.5rem;font-weight:bold;color:#fff;background:#a29bfe center/cover no-repeat;cursor:pointer;border:4px solid #fff;box-shadow:0 2px 8px #0003}
+.name{font-size:1.6rem;font-weight:bold;margin:10px 0}
+button{font-size:1.1rem;padding:10px 14px;border:0;border-radius:12px;margin:4px;background:#00b894;color:#fff}
+button.ph{background:#636e72;font-size:.95rem}
+.game{display:block;width:min(90vw,420px);margin:12px auto;padding:26px 16px;border-radius:24px;color:#fff;text-decoration:none;font-size:1.6rem;font-weight:bold;box-shadow:0 5px 14px #0003}
+.game span{display:block;font-size:3.5rem}
+.m{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}.r{background:linear-gradient(135deg,#00b894,#55efc4)}
 small{display:block;font-size:1rem;font-weight:normal;margin-top:6px}
+#head{display:flex;align-items:center;justify-content:center;gap:12px;font-size:1.5rem;font-weight:bold}
+#head .av{width:64px;height:64px;font-size:1.8rem;margin:0}
+#games{display:none}
+a.sw{color:#6c5ce7;font-size:1.1rem}
 </style></head><body>
+<div id="pick">
+<h1>Qui joue ?</h1>
+<div class="row" id="profiles"></div>
+</div>
+<div id="games">
+<div id="head"></div>
+<a class="sw" href="#" id="switch">Changer de joueur</a>
 <h1>🐾 Jeux des animaux</h1>
-<a class="m" href="memoire.html"><span>🃏</span>Memory des animaux<small>Trouve les paires et dis le nom !</small></a>
-<a class="r" href="repete.html"><span>🦆</span>Dis-le 10 fois !<small>Répète le mot pour faire envoler l'animal</small></a>
+<a class="game m" href="memoire.html"><span>🃏</span>Memory des animaux<small>Trouve les paires et dis le nom !</small></a>
+<a class="game r" href="repete.html"><span>🦆</span>Dis-le 10 fois !<small>Répète le mot pour faire envoler l'animal</small></a>
+</div>
+<input type="file" id="file" accept="image/*" style="display:none">
+<script>
+const KIDS=["Mateo","Felipe"],COL={Mateo:"#0984e3",Felipe:"#e17055"};
+const photo=n=>localStorage.getItem("fr_photo_"+n);
+let target=null;
+function avatar(n,el){const p=photo(n);el.style.backgroundColor=COL[n];el.style.backgroundImage=p?`url(${p})`:"";el.textContent=p?"":n[0]}
+function renderPick(){
+  const box=document.getElementById("profiles");box.innerHTML="";
+  KIDS.forEach(n=>{
+    const c=document.createElement("div");c.className="prof";c.dataset.kid=n;
+    c.innerHTML=`<div class="av" title="Photo"></div><div class="name">${n}</div><button class="go">Jouer</button><br><button class="ph">📷 ${photo(n)?"Changer la photo":"Ajouter une photo"}</button>`;
+    avatar(n,c.querySelector(".av"));
+    const up=()=>{target=n;document.getElementById("file").click()};
+    c.querySelector(".av").onclick=up;c.querySelector(".ph").onclick=up;
+    c.querySelector(".go").onclick=()=>choose(n);
+    box.appendChild(c);
+  });
+}
+function choose(n){localStorage.setItem("fr_current",n);showGames()}
+function showGames(){
+  const n=localStorage.getItem("fr_current");if(!KIDS.includes(n))return showPick();
+  document.getElementById("pick").style.display="none";document.getElementById("games").style.display="block";
+  const h=document.getElementById("head");h.innerHTML=`<div class="av"></div><span>${n}</span>`;avatar(n,h.querySelector(".av"));
+}
+function showPick(){document.getElementById("games").style.display="none";document.getElementById("pick").style.display="block";renderPick()}
+document.getElementById("switch").onclick=e=>{e.preventDefault();localStorage.removeItem("fr_current");showPick()};
+document.getElementById("file").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f||!target)return;
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{
+    const S=300,cv=document.createElement("canvas");cv.width=cv.height=S;
+    const m=Math.min(img.width,img.height);
+    cv.getContext("2d").drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+    URL.revokeObjectURL(url);
+    try{localStorage.setItem("fr_photo_"+target,cv.toDataURL("image/jpeg",0.8))}catch(x){alert("Photo trop grande, essaie une autre.")}
+    renderPick();
+  };
+  img.onerror=()=>alert("Impossible de lire cette image.");
+  img.src=url;
+};
+localStorage.getItem("fr_current")?showGames():showPick();
+</script>
 </body></html>
