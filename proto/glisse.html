@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Construis la phrase</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="fx.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none;background:radial-gradient(circle at 50% 30%,#fdf4ff,#c4b5fd)}
+#stage{position:absolute;left:0;right:0;top:60px;height:34vh}#ani{position:absolute;font-size:min(22vw,130px);left:0;top:0;will-change:transform}
+#blob{position:absolute;width:70px;height:70px;border-radius:50%;box-shadow:0 0 0 6px #fff,0 6px 16px #0004}
+#slots{position:absolute;left:0;right:0;top:calc(60px + 36vh);display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.slot{width:min(28vw,150px);height:66px;border:4px dashed #7c3aed;border-radius:16px;background:#fff8;display:flex;align-items:center;justify-content:center;color:#7c3aed;font:700 .9rem system-ui}
+.slot.hot{background:#ede9fe;transform:scale(1.06)}
+#pool{position:absolute;left:0;right:0;bottom:0;height:30vh}
+.tile{position:absolute;min-width:90px;height:58px;padding:0 14px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:800 1.5rem system-ui;color:#fff;box-shadow:0 5px 0 #0003,0 8px 16px #0003;user-select:none;-webkit-user-select:none;cursor:grab;touch-action:none}
+.art{background:#f59e0b}.nom{background:#10b981}.col{background:#3b82f6}
+#msg{position:absolute;left:0;right:0;top:calc(60px + 36vh + 90px);text-align:center;font:800 1.6rem system-ui;color:#5b21b6;min-height:1.4em}</style></head><body>
+<div id="stage"><div id="blob"></div><div id="ani"></div></div>
+<div id="slots"><div class="slot" data-k="art"></div><div class="slot" data-k="nom"></div><div class="slot" data-k="col"></div></div>
+<div id="msg"></div><div id="pool"></div>
+<script>
+langBar();const es=LANG=="es",COLS=t("COLS");
+const HEX={bleu:"#3b82f6",azul:"#3b82f6",rouge:"#ef4444",rojo:"#ef4444",vert:"#22c55e",verde:"#22c55e",jaune:"#facc15",amarillo:"#facc15",rose:"#f472b6",rosa:"#f472b6",violet:"#8b5cf6",violeta:"#8b5cf6"};
+const L={art:es?"artículo":"article",nom:es?"animal":"animal",col:es?"color":"couleur",hint:es?"¡Arrastrá las palabras a los casilleros!":"Glisse les mots dans les cases !",no:es?"¡Casi! Probá otra vez":"Presque ! Essaie encore",ok:es?"¡Muy bien!":"Bravo !"};
+document.querySelectorAll(".slot").forEach(s=>s.textContent=L[s.dataset.k]);
+let A,C,tiles=[],filled={},round=0;
+const ARTS=es?["el","la"]:["le","la","l'"];
+function mk(txt,k,ok){const d=document.createElement("div");d.className="tile "+k;d.textContent=txt;pool.appendChild(d);const o={d,k,txt,ok,x:0,y:0,vx:0,vy:0,tx:0,ty:0,home:null,slot:null,drag:false};tiles.push(o);drag(o);return o}
+function correctArt(){return art(A).trim()}
+function colWord(){return A.g=="f"?C[1]:C[0]}
+function sentence(){const a=correctArt();const s=(a=="l'"?"L'":a[0].toUpperCase()+a.slice(1)+" ")+A.w+" "+colWord();return es?"¡"+s+"!":s+" !"}
+function newRound(){
+  pool.innerHTML="";tiles=[];filled={};msg.textContent=L.hint;round++;
+  A=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];C=COLS[Math.floor(Math.random()*COLS.length)];
+  ani.textContent=A.e;blob.style.background=HEX[C[0]];
+  const nn=[A.w,...ANIMALS.filter(x=>x!==A).sort(()=>Math.random()-.5).slice(0,2).map(x=>x.w)];
+  const cw=colWord(),other=A.g=="f"?C[0]:C[1],cols=[cw];if(other!=cw)cols.push(other);COLS.filter(x=>x!==C).sort(()=>Math.random()-.5).slice(0,3-cols.length).forEach(x=>cols.push(A.g=="f"?x[1]:x[0]));
+  const list=[...ARTS.map(a=>[a,"art",a==correctArt()]),...nn.map(w=>[w,"nom",w==A.w]),...cols.map(w=>[w,"col",w==cw])].sort(()=>Math.random()-.5);
+  const pw=pool.clientWidth,ph=pool.clientHeight,per=Math.max(3,Math.floor(pw/120)),rows=Math.ceil(list.length/per);
+  list.forEach((l,i)=>{const o=mk(...l);const r=Math.floor(i/per),cI=i%per,rowN=Math.min(per,list.length-r*per);
+    o.home={x:(cI+.5)*pw/rowN-50,y:12+r*Math.min(70,(ph-70)/Math.max(1,rows-1||1))};o.x=o.home.x;o.y=ph+80;o.tx=o.home.x;o.ty=o.home.y});
+  speak(es?"¡Armá la frase!":"Construis la phrase !");
+}
+function slotEl(k){return document.querySelector(`.slot[data-k="${k}"]`)}
+function drag(o){let ox,oy;
+  o.d.addEventListener("pointerdown",e=>{unlockAudio();o.d.setPointerCapture(e.pointerId);o.drag=true;const r=o.d.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;o.d.style.zIndex=10;
+    if(o.slot){delete filled[o.slot];o.slot=null}SFX.pop()});
+  o.d.addEventListener("pointermove",e=>{if(!o.drag)return;const pr=pool.getBoundingClientRect();o.x=e.clientX-pr.left-ox;o.y=e.clientY-pr.top-oy;o.tx=o.x;o.ty=o.y;
+    document.querySelectorAll(".slot").forEach(s=>s.classList.toggle("hot",s.dataset.k==o.k&&hit(s,e)))});
+  o.d.addEventListener("pointerup",e=>{if(!o.drag)return;o.drag=false;o.d.style.zIndex=1;document.querySelectorAll(".slot").forEach(s=>s.classList.remove("hot"));
+    const s=slotEl(o.k);if(hit(s,e,40)){if(filled[o.k]){const prev=filled[o.k];prev.slot=null;prev.tx=prev.home.x;prev.ty=prev.home.y}filled[o.k]=o;o.slot=o.k;place(o);SFX.snap();check()}
+    else{o.tx=o.home.x;o.ty=o.home.y}})}
+function hit(s,e,m=0){const r=s.getBoundingClientRect();return e.clientX>r.left-m&&e.clientX<r.right+m&&e.clientY>r.top-m&&e.clientY<r.bottom+m}
+function place(o){const r=slotEl(o.k).getBoundingClientRect(),pr=pool.getBoundingClientRect();o.tx=r.left-pr.left+(r.width-o.d.offsetWidth)/2;o.ty=r.top-pr.top+(r.height-o.d.offsetHeight)/2}
+function check(){if(!(filled.art&&filled.nom&&filled.col))return;
+  if(filled.art.ok&&filled.nom.ok&&filled.col.ok){const s=sentence();msg.textContent="✅ "+s;SFX.good();confetti();const r=ani.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,40,[A.e,"⭐"]);speak(s);setTimeout(newRound,2600)}
+  else{SFX.bad();msg.textContent="❌ "+L.no;for(const k in filled){const o=filled[k];if(!o.ok){o.slot=null;delete filled[k];o.tx=o.home.x;o.ty=o.home.y;o.vy=-18}}}}
+let bx=40,by=20,bvx=2.2,bvy=1.6,t0=0;
+function loop(ts){const dt=Math.min(3,(ts-(t0||ts))/16.7);t0=ts;
+  const st=stage.getBoundingClientRect(),aw=ani.offsetWidth||120,ah=ani.offsetHeight||120;bx+=bvx*dt;by+=bvy*dt;if(bx<0||bx>st.width-aw)bvx*=-1;if(by<0||by>st.height-ah)bvy*=-1;bx=Math.max(0,Math.min(st.width-aw,bx));by=Math.max(0,Math.min(st.height-ah,by));
+  const sq=1+Math.sin(ts/120)*.06;ani.style.transform=`translate(${bx}px,${by}px) scale(${bvx>0?-sq:sq},${2-sq})`;blob.style.transform=`translate(${bx+aw-40}px,${by-10}px)`;
+  for(const o of tiles){if(!o.drag){o.vx=(o.vx+(o.tx-o.x)*.18)*.72;o.vy=(o.vy+(o.ty-o.y)*.18)*.72;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.slot)place(o)}o.d.style.transform=`translate(${o.x}px,${o.y}px) rotate(${o.drag?-4:o.vx*.6}deg)`}
+  requestAnimationFrame(loop)}
+newRound();requestAnimationFrame(loop);
+</script></body></html>
