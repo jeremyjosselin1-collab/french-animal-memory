@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Attrape-le !</title><link rel="icon" href="data:,"><script src="../i18n.js"></script><script src="fx.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;touch-action:none;background:#14532d}canvas#g{display:block;width:100vw;height:100vh}
+#card{position:fixed;top:54px;left:50%;width:170px;height:120px;margin-left:-85px;perspective:700px;z-index:40;pointer-events:none}
+#ci{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.3,1.6,.5,1)}
+#ci.flip{transform:rotateY(180deg) scale(1.08)}
+.f{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 20px #0006;font:800 1.5rem system-ui}
+.fa{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:3rem}.fb{background:#fff;transform:rotateY(180deg)}.fb span{font-size:2.6rem}
+#hud{position:fixed;top:182px;left:0;right:0;text-align:center;color:#fff;font:700 1.2rem system-ui;text-shadow:0 2px 4px #000a;pointer-events:none;z-index:40}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0008;z-index:70;color:#fff;font:700 1.4rem system-ui}#start button{font:800 2rem system-ui;padding:20px 34px;border:0;border-radius:24px;background:#00b894;color:#fff;margin-top:14px}</style></head><body>
+<canvas id="g"></canvas>
+<div id="card"><div id="ci"><div class="f fa">❓</div><div class="f fb"><span id="ce"></span><div id="cw"></div></div></div></div>
+<div id="hud"></div>
+<div id="start"><div id="st"></div><button id="go">▶</button></div>
+<script>
+langBar();const es=LANG=="es";
+const T={catch_:a=>es?`¡Atrapá ${art(a)}${a.w}!`:`Attrape ${art(a)}${a.w} !`,no:a=>es?`¡Uy! Ese es ${art(a)}${a.w}`:`Oups ! C'est ${art(a)}${a.w}`,over:s=>es?`¡Fin! Atrapaste ${s} animales`:`Fini ! Tu as attrapé ${s} animaux`,win:es?"¡Sos un campeón!":"Tu es un champion !",start:es?"Tocá el animal que te digo. ¡Cada vez van más rápido!":"Touche l'animal que je dis. Ils vont de plus en plus vite !"};
+st.textContent=T.start;
+const c=g.getContext("2d");let W,H;function rs(){W=innerWidth;H=innerHeight;g.width=W*devicePixelRatio;g.height=H*devicePixelRatio;c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}rs();addEventListener("resize",rs);
+let mobs=[],target=null,score=0,hearts=3,run=false,spawnT=0,lv=1,t0=0,flash=0;const WIN=15;
+function lanes(){const top=230,bot=H-50,n=Math.max(3,Math.min(5,Math.floor((bot-top)/90)));return Array.from({length:n},(_,i)=>top+(i+.5)*(bot-top)/n)}
+function newTarget(){target=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];ci.classList.remove("flip");setTimeout(()=>{ce.textContent=target.e;cw.textContent=art(target)+target.w;ci.classList.add("flip")},250);speak(T.catch_(target));hud.textContent=`⭐ ${score}   ${"❤️".repeat(hearts)}`}
+function spawn(){const L=lanes(),dir=Math.random()<.5?1:-1,a=Math.random()<.4?target:ANIMALS[Math.floor(Math.random()*ANIMALS.length)];
+  mobs.push({a,dir,x:dir>0?-60:W+60,y:L[Math.floor(Math.random()*L.length)],v:(1.6+lv*.45+Math.random())*dir,ph:Math.random()*6,s:1,dead:0})}
+function draw(ts){const dt=Math.min(3,(ts-(t0||ts))/16.7);t0=ts;
+  c.fillStyle="#166534";c.fillRect(0,0,W,H);const L=lanes();
+  L.forEach((y,i)=>{c.fillStyle=i%2?"#15803d":"#16a34a";c.fillRect(0,y-40,W,80)});
+  c.font="30px sans-serif";for(let i=0;i<14;i++){c.fillText(i%3?"🌼":"🌱",(i*137+ts*.0)%W,215+((i*71)%Math.max(1,H-240)))}
+  if(run){spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(22,70-lv*7)*(.6+Math.random()*.8)}}
+  mobs=mobs.filter(m=>{if(m.dead){m.dead+=dt;m.s+=.08*dt;if(m.dead>20)return false}else{m.x+=m.v*dt}
+    const hop=Math.abs(Math.sin(ts/110+m.ph))*14;c.save();c.translate(m.x,m.y-hop);if(m.dir>0)c.scale(-1,1);c.scale(m.s,m.s);
+    c.globalAlpha=m.dead?Math.max(0,1-m.dead/20):1;c.font="58px sans-serif";c.textAlign="center";c.textBaseline="middle";c.fillText(m.a.e,0,0);c.restore();
+    c.fillStyle="#0003";c.beginPath();c.ellipse(m.x,m.y+28,22-hop/2,6,0,0,7);c.fill();
+    return m.x>-120&&m.x<W+120});
+  if(flash>0){c.fillStyle=`rgba(255,0,0,${flash/40})`;c.fillRect(0,0,W,H);flash-=dt}
+  requestAnimationFrame(draw)}
+g.addEventListener("pointerdown",e=>{if(!run)return;let best=null,bd=48;for(const m of mobs){if(m.dead)continue;const d=Math.hypot(m.x-e.clientX,m.y-e.clientY);if(d<bd){bd=d;best=m}}if(!best)return;
+  if(best.a===target){best.dead=1;burst(best.x,best.y,35,[best.a.e,"⭐","✨"]);SFX.good();score++;lv=1+Math.floor(score/3);
+    if(score>=WIN){run=false;confetti();hud.textContent="🏆 "+T.win;speak(T.win);setTimeout(()=>{st.textContent="🏆 "+T.win;start.style.display="flex"},1500)}else newTarget()}
+  else{SFX.bad();flash=14;hearts--;speak(T.no(best.a));hud.textContent=`⭐ ${score}   ${"❤️".repeat(Math.max(0,hearts))}`;
+    if(hearts<=0){run=false;mobs=[];setTimeout(()=>{st.textContent=T.over(score);start.style.display="flex";speak(T.over(score))},700)}}});
+go.onclick=()=>{unlockAudio();start.style.display="none";score=0;hearts=3;lv=1;mobs=[];run=true;newTarget()};
+requestAnimationFrame(draw);
+</script></body></html>
