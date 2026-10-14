@@ -1,87 +1,71 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Dis-le 10 fois !</title>
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:system-ui,sans-serif;background:#e8f8ff;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
-.menu{display:inline-block;margin:10px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
 h1{font-size:1.6rem;margin:6px 0}
+button{font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on{background:#d63031}
+.big{font-size:7rem;line-height:1.2}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:480px;margin:12px auto;padding:0 12px}
+.opt{background:#fff;color:#333;font-size:1.5rem;padding:16px 6px;box-shadow:0 3px 8px #0002;margin:0}
+.opt.e{font-size:4rem;padding:8px}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}
+#msg{min-height:1.6em;font-size:1.2rem;padding:0 12px}
+#score{font-size:1.2rem;font-weight:bold}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+#end{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem;background:#fff7e6;z-index:9}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
 #emoji{font-size:9rem;line-height:1.2;margin:10px 0;display:inline-block}
 #emoji.fly{animation:fly 1.6s ease-in forwards}
 @keyframes fly{0%{transform:translate(0,0) rotate(0)}30%{transform:translate(-20px,-30px) rotate(-10deg) scale(1.1)}100%{transform:translate(120vw,-120vh) rotate(25deg) scale(.4);opacity:0}}
-#word{font-size:2.4rem;font-weight:bold;min-height:1.4em;color:#0984e3}
-button{font-size:1.25rem;padding:14px 22px;border:0;border-radius:14px;margin:8px;background:#00b894;color:#fff}
-button.say{background:#0984e3}
-button.on{background:#d63031}
-button.tap{background:#fdcb6e;color:#333}
-#count{font-size:2rem;font-weight:bold;margin:6px}
-#dots{display:flex;justify-content:center;gap:8px;margin:8px}
-.dot{width:22px;height:22px;border-radius:50%;background:#dfe6e9;transition:background .2s,transform .2s}
-.dot.f{background:#00b894;transform:scale(1.2)}
-#msg{min-height:1.5em;padding:0 12px;font-size:1.05rem}
-#end{display:none;position:fixed;inset:0;background:#e8f8ff;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem}
+#word{font-size:2.4rem;font-weight:bold;min-height:1.4em;color:#0984e3}#count{font-size:2rem;font-weight:bold;margin:6px}
+#dots{display:flex;justify-content:center;gap:8px;margin:8px}.dot{width:22px;height:22px;border-radius:50%;background:#dfe6e9;transition:background .2s,transform .2s}.dot.f{background:#00b894;transform:scale(1.2)}
 </style></head><body>
-<a class="menu" href="./">🏠 Menu</a> <a class="menu" href="memoire.html">🃏 Memory</a>
-<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
-<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
-<h1>Dis-le 10 fois !</h1>
-<div id="emoji"></div>
-<div id="word"></div>
-<button class="say" id="say">🔊 Comment dire en français?</button><br>
-<button id="mic">🎤 Écouter</button>
-<button class="tap" id="tap" style="display:none">👆 J'ai dit le mot</button>
-<div id="count">0 / 10</div>
-<div id="dots"></div>
-<div id="msg"></div>
-<div id="end"><div style="font-size:5rem">🏆</div><div>Bravo ! Tous les animaux se sont envolés !</div><button id="again">Rejouer</button><a class="menu" href="./">🏠 Menu</a></div>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gRepete" data-i="0"></h1>
+
+<div id="emoji"></div><div id="word"></div>
+<button class="say" id="say" data-t="r_how"></button><br>
+<button id="mic"></button><button class="tap" id="tap" style="display:none" data-t="r_tap"></button>
+<div id="count">0 / 10</div><div id="dots"></div><div id="msg"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again" data-t="again"></button><a class="menu" href="./" data-t="menu"></a></div>
 <script>
-const ANIMALS=[["canard","🦆",["canard"]],["chien","🐶",["chien"]],["chat","🐱",["chat"]],["lapin","🐰",["lapin"]],["éléphant","🐘",["elephant"]],["girafe","🦒",["girafe","giraffe"]],["zèbre","🦓",["zebre"]],["singe","🐵",["singe"]],["ours","🐻",["ours"]],["tigre","🐯",["tigre"]]];
-const GOAL=10,$=id=>document.getElementById(id);
-const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]+/g," ").trim();
+header();document.title=document.querySelector("h1").textContent;
+const $=id=>document.getElementById(id);
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let idx=0,count=0,busy=false,listening=false,rec=null,counted=[];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
+function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
+</script>
+<script>
+const GOAL=10;let idx=0,count=0,busy=false,listening=false,rec=null,counted=[];
 for(let i=0;i<GOAL;i++){const d=document.createElement("div");d.className="dot";$("dots").appendChild(d)}
-function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";speechSynthesis.speak(u)}catch(e){}}
-function show(){
-  const a=ANIMALS[idx];count=0;busy=false;
-  const e=$("emoji");e.classList.remove("fly");void e.offsetWidth;e.textContent=a[1];
-  $("word").textContent="";render();
-  $("msg").textContent=SR?"Appuie sur 🎤 et dis le mot 10 fois !":"La reconnaissance vocale n'est pas disponible ici. Essaie Chrome ou Safari. Tu peux taper sur le bouton jaune à chaque fois que tu dis le mot.";
-}
+function show(){const a=ANIMALS[idx];count=0;busy=false;const e=$("emoji");e.classList.remove("fly");void e.offsetWidth;e.textContent=a.e;$("word").textContent="";render();$("msg").textContent=SR?t("r_go"):t("r_nosr")}
 function render(){$("count").textContent=count+" / "+GOAL;[...$("dots").children].forEach((d,i)=>d.classList.toggle("f",i<count))}
-function add(n){
-  if(busy||n<=0)return;
-  count=Math.min(GOAL,count+n);render();
-  if(count>=GOAL)win();
-}
-function win(){
-  busy=true;$("emoji").classList.add("fly");speak("Bravo !");$("msg").textContent="Bravo ! 🎉";
-  setTimeout(()=>{idx++;counted=[];if(idx>=ANIMALS.length){stop();$("end").style.display="flex"}else show()},1900);
-}
-function hits(t){const ws=ANIMALS[idx][2];return norm(t).split(" ").filter(w=>ws.includes(w)).length}
+function add(n){if(busy||n<=0)return;count=Math.min(GOAL,count+n);render();if(count>=GOAL)win()}
+function win(){busy=true;$("emoji").classList.add("fly");speak(t("bravo"));$("msg").textContent=t("r_bravo");
+  setTimeout(()=>{idx++;counted=[];if(idx>=ANIMALS.length){stop();endScreen(t("r_end"))}else show()},1900)}
+function hits(x){const ws=names(ANIMALS[idx]);return norm(x).split(" ").filter(w=>ws.includes(w)).length}
 function startRec(){
-  rec=new SR();rec.lang="fr-FR";rec.continuous=true;rec.interimResults=true;counted=[];
-  rec.onresult=e=>{
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const n=hits(e.results[i][0].transcript),prev=counted[i]||0;
-      if(n>prev){counted[i]=n;add(n-prev)}
-    }
-    const last=e.results[e.results.length-1][0].transcript;$("msg").textContent="J'entends : « "+last+" »";
-  };
-  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){listening=false;$("msg").textContent="Autorise le micro dans le navigateur.";ui()}};
+  rec=new SR();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;counted=[];
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const n=hits(e.results[i][0].transcript),prev=counted[i]||0;if(n>prev){counted[i]=n;add(n-prev)}}
+    $("msg").textContent=t("hearing",e.results[e.results.length-1][0].transcript)};
+  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){listening=false;$("msg").textContent=t("allowMic");ui()}};
   rec.onend=()=>{if(listening)setTimeout(()=>{if(listening)try{startRec()}catch(x){}},250)};
   try{rec.start()}catch(x){}
 }
 function stop(){listening=false;try{rec&&rec.stop()}catch(x){}ui()}
-function ui(){$("mic").textContent=listening?"⏹ Arrêter":"🎤 Écouter";$("mic").classList.toggle("on",listening)}
-$("say").onclick=()=>{const w=ANIMALS[idx][0];$("word").textContent=w;speak(w)};
-$("mic").onclick=()=>{
-  if(!SR){$("tap").style.display="inline-block";$("msg").textContent="La reconnaissance vocale n'est pas disponible ici. Essaie Chrome ou Safari. Tape sur le bouton jaune à chaque fois que tu dis le mot.";return}
-  if(listening)stop();else{listening=true;ui();$("msg").textContent="J'écoute… 👂";startRec()}
-};
-$("tap").onclick=()=>add(1);
-if(!SR)$("tap").style.display="inline-block";
-$("again").onclick=()=>{idx=0;$("end").style.display="none";show()};
-show();
-</script></body></html>
+function ui(){$("mic").textContent=listening?t("stop"):t("listen");$("mic").classList.toggle("on",listening)}
+$("say").onclick=()=>{const w=ANIMALS[idx].w;$("word").textContent=w;speak(w)};
+$("mic").onclick=()=>{if(!SR){$("tap").style.display="inline-block";$("msg").textContent=t("r_nosr");return}
+  if(listening)stop();else{listening=true;ui();$("msg").textContent=t("listening");startRec()}};
+$("tap").onclick=()=>add(1);if(!SR)$("tap").style.display="inline-block";
+$("again").onclick=()=>{idx=0;$("end").style.display="none";show()};ui();show();
+</script>
+</body></html>
