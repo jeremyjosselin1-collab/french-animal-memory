@@ -52,7 +52,7 @@ function start(){list=shuffle(ANIMALS);round=0;score=0;$("end").style.display="n
 function next(){
   if(round>=R)return endScreen(score+" / "+R+" ! Bravo "+(localStorage.getItem("fr_current")||"")+" !");
   a=list[round++];
-  greet=lastG==null?(Math.random()<.5?"b":"r"):(Math.random()<.75?(lastG=="b"?"r":"b"):lastG);lastG=greet;
+  greet=lastG==null?(Math.random()<.5?"b":"r"):(lastG=="b"?"r":"b");lastG=greet;
   step=1;busy=false;$("emo").textContent=a.e;pop($("emo"));$("score").textContent="Animal "+round+" / "+R+" · ⭐ "+score;
   $("prompt").textContent=G[greet].p;$("tap").textContent=G[greet].tap;$("heard").textContent="";
   $("msg").textContent=SR?"Dis "+G[greet].say+" + le nom de l'animal !":"Micro non disponible ici, essaie Chrome ou Safari. Tape sur le bouton jaune quand tu l'as dit.";
