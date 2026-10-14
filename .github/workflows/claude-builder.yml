@@ -1,0 +1,135 @@
+# Claude Builder: runs Claude Code on Jeremy's Claude subscription
+# (CLAUDE_CODE_OAUTH_TOKEN), adapted from convoai-uk/engage ai-team-builder-claude.yml.
+# Triggers:
+#   - workflow_dispatch with a 'prompt' input
+#   - adding the label 'claude' to an issue (issue title + body is the prompt)
+#   - an issue comment starting with '/claude' by the repo owner (issue + comment is the prompt)
+# Work is pushed to branch claude/<id> and a PR into main is opened.
+# Needs repo secret CLAUDE_CODE_OAUTH_TOKEN. ANTHROPIC_API_KEY is deliberately not used.
+
+name: Claude Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "What Claude should build"
+        required: true
+        type: string
+      model:
+        description: "Claude model alias"
+        required: false
+        type: choice
+        options: [sonnet, haiku]
+        default: sonnet
+      max_turns:
+        description: "Max agent turns"
+        required: false
+        type: string
+        default: "80"
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: claude-builder-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'claude') ||
+      (github.event_name == 'issue_comment' && !github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/claude') &&
+       github.event.comment.user.login == github.repository_owner)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build prompt and branch
+        env:
+          IN_PROMPT: ${{ inputs.prompt }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          if [ -n "${ISSUE_NUM:-}" ]; then
+            ID="issue-${ISSUE_NUM}"
+            { echo "Task from GitHub issue #${ISSUE_NUM}: ${ISSUE_TITLE}"; echo; echo "${ISSUE_BODY}";
+              if [ -n "${COMMENT_BODY:-}" ]; then echo; echo "Additional instruction: ${COMMENT_BODY#/claude}"; fi; } > /tmp/prompt.txt
+          else
+            ID="run-${{ github.run_id }}"
+            printf '%s\n' "$IN_PROMPT" > /tmp/prompt.txt
+          fi
+          echo "BRANCH=claude/${ID}" >> "$GITHUB_ENV"
+          echo "TASK_ID=${ID}" >> "$GITHUB_ENV"
+          BASE="${{ github.event.repository.default_branch }}"
+          echo "BASE=${BASE}" >> "$GITHUB_ENV"
+          git fetch origin
+          if git ls-remote --exit-code --heads origin "claude/${ID}" >/dev/null 2>&1; then
+            git checkout "claude/${ID}"
+          else
+            git checkout -b "claude/${ID}" "origin/${BASE}"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Claude
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set +e
+          claude -p --dangerously-skip-permissions \
+            --model "${{ inputs.model || 'sonnet' }}" \
+            --max-turns "${{ inputs.max_turns || '80' }}" \
+            --output-format json \
+            "$(cat /tmp/prompt.txt)
+
+          This is a static GitHub Pages site. Commit nothing yourself; just edit files. If this branch already has earlier commits, continue from them." \
+            > /tmp/claude-result.json 2>/tmp/claude-stderr.txt
+          rc=$?
+          echo "claude exit status: $rc"
+          python3 - <<'PY' || cat /tmp/claude-result.json
+          import json
+          d = json.load(open('/tmp/claude-result.json'))
+          print('subtype:', d.get('subtype'), 'is_error:', d.get('is_error'), 'turns:', d.get('num_turns'))
+          print('total_cost_usd:', d.get('total_cost_usd'))
+          print('result/error:', d.get('result') or d.get('error') or '')
+          PY
+          echo "stderr:"; cat /tmp/claude-stderr.txt
+          exit $rc
+
+      - name: Commit and push
+        if: always()
+        run: |
+          git config user.name "claude-builder"
+          git config user.email "claude-builder@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Claude Builder: ${TASK_ID}"
+          git push origin "HEAD:${BRANCH}"
+
+      - name: Open PR (idempotent)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CLOSES=""
+          if [ -n "${{ github.event.issue.number }}" ]; then CLOSES="Closes #${{ github.event.issue.number }}"; fi
+          gh pr create --base "$BASE" --head "$BRANCH" --title "Claude Builder: ${TASK_ID}" \
+            --body "Automated Claude Builder run ${{ github.run_id }}. ${CLOSES}" \
+            || echo "PR already exists or nothing to merge; the push above updated it."
