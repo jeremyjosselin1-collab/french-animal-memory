@@ -25,6 +25,8 @@ button.alt{background:#636e72}
 #win{display:none;position:fixed;inset:0;background:#fff7e6;flex-direction:column;align-items:center;justify-content:center;font-size:1.6rem}
 </style></head><body>
 <a href="./" style="display:inline-block;margin:10px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem">🏠 Menu</a>
+<div id="kid" style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px"></div>
+<script>(function(){const n=localStorage.getItem("fr_current");const k=document.getElementById("kid");if(!n){k.innerHTML='<a href="./">Qui joue ?</a>';return}const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";k.innerHTML='<div style="width:48px;height:48px;border-radius:50%;background:'+c+' center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span></span><a href="./" onclick="localStorage.removeItem(\'fr_current\')" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">Changer de joueur</a>';const a=k.firstChild;if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector("span").textContent=n})();</script>
 <h1>🐾 Memory des animaux</h1>
 <div id="score"></div>
 <div id="status">Tourne deux cartes pour trouver une paire !</div>
