@@ -31,6 +31,11 @@ button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on
 .back{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:2.4rem}
 .front{background:#fff;transform:rotateY(180deg);font-size:3.2rem;flex-direction:column}
 .front small{font-size:.9rem;margin-top:4px}.card.done .front{background:#c8f7c5}
+#picker{display:none;max-width:420px;margin:16px auto;padding:0 14px}
+#picker h2{font-size:1.8rem;margin:8px 0 0}#picker .en{font-size:1rem;color:#666;margin:2px 0 14px}
+#picker button{display:block;width:100%;margin:12px 0;padding:22px 10px;font-size:2.2rem;font-weight:bold;border-radius:22px;box-shadow:0 4px 10px #0003}
+#picker button small{display:block;font-size:1rem;font-weight:normal;margin-top:4px}
+#b8{background:#00b894}#b16{background:#6c5ce7}
 #panel{display:none;margin:10px auto;max-width:460px;padding:14px;background:#fff;border-radius:16px;box-shadow:0 3px 10px #0002}#panel .big{font-size:4rem}
 </style></head><body>
 <a class="menu" href="./" data-t="menu">🏠 Menu</a>
@@ -41,6 +46,12 @@ button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on
 <div id="panel"><div class="big" id="pEmoji"></div><div data-t="m_say"></div>
 <button id="mic" data-t="talk"></button><button class="tap" id="hint" data-t="hint"></button>
 <div id="heard" style="min-height:1.5em;margin-top:6px"></div></div>
+<div id="picker"><div id="stepTheme"><h2 data-t="m_theme"></h2><div class="en" data-t="m_themeEn"></div>
+<button id="tA" style="background:#00b894">🐶 <span data-t="m_tA"></span><small data-t="m_tAs"></small></button>
+<button id="tF" style="background:#e17055">🍎 <span data-t="m_tF"></span><small data-t="m_tFs"></small></button>
+<button id="tM" style="background:#6c5ce7">🐱🍕 <span data-t="m_tM"></span><small data-t="m_tMs"></small></button></div>
+<div id="stepSize" style="display:none"><h2 data-t="m_pick"></h2><div class="en" data-t="m_pickEn"></div><button id="b8">🃏 <span data-t="m_8"></span><small data-t="m_8s"></small></button><button id="b16">🃏🃏 <span data-t="m_16"></span><small data-t="m_16s"></small></button>
+<button id="bBack" style="background:#b2bec3;font-size:1.2rem;padding:12px 10px">← <span data-t="m_back"></span><small data-t="m_backEn"></small></button></div></div>
 <div id="grid"></div><div id="end"><div style="font-size:5rem">🏆</div><div id="endtxt"></div><button id="again" data-t="again"></button><a class="menu" href="./" data-t="menu"></a></div>
 <script>
 header();document.title=document.querySelector("h1").textContent;
@@ -51,11 +62,15 @@ function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add
 function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-const PAIRS=5,grid=$("grid"),status=$("status"),panel=$("panel");
+let PAIRS=4,THEME="A";
+function themePool(n){if(THEME=="A")return shuffle(ANIMALS).slice(0,n);if(THEME=="F")return shuffle(FOODS).slice(0,n);const h=n/2;return shuffle([...shuffle(ANIMALS).slice(0,h),...shuffle(FOODS).slice(0,h)])}
+const grid=$("grid"),status=$("status"),panel=$("panel");
 let first=null,lock=false,pending=null,cleared=0,tries=0;
+function choose(){grid.innerHTML="";grid.style.display="none";$("end").style.display="none";panel.style.display="none";$("score").textContent="";status.textContent="";$("picker").style.display="block";$("stepTheme").style.display="block";$("stepSize").style.display="none"}
+function begin(n){PAIRS=n/2;$("picker").style.display="none";grid.style.display="grid";start()}
 function start(){
   grid.innerHTML="";first=null;lock=false;pending=null;cleared=0;tries=0;panel.style.display="none";$("end").style.display="none";
-  const pick=shuffle(ANIMALS).slice(0,PAIRS);
+  const pick=themePool(PAIRS);
   shuffle([...pick,...pick]).forEach(a=>{const c=document.createElement("div");c.className="card";c.animal=a;
     c.innerHTML=`<div class="inner"><div class="face back">?</div><div class="face front">${a.e}<small></small></div></div>`;c.onclick=()=>tap(c);grid.appendChild(c)});
   status.textContent=t("m_turn");score();
@@ -68,7 +83,7 @@ function tap(c){
   else{lock=true;const a=first;first=null;status.textContent=t("m_diff");setTimeout(()=>{a.classList.remove("up");c.classList.remove("up");lock=false},900)}
 }
 function success(){
-  const a=pending[0].animal;pending.forEach(c=>{c.classList.add("done");c.querySelector("small").textContent=a.w});
+  const a=pending[0].animal;pending.forEach(c=>{c.classList.add("done");c.querySelector("small").textContent=a.food?art(a)+a.w:a.w});
   speak(t("bravo")+" "+a.w);status.textContent=t("m_ok",a.w);pending=null;panel.style.display="none";cleared++;score();
   if(cleared===PAIRS)setTimeout(()=>endScreen(t("won")),900);
 }
@@ -81,6 +96,9 @@ $("mic").onclick=()=>{
   r.onerror=e=>{heard.textContent=e.error==="not-allowed"?t("allowMic"):t("nothing")};r.start();
 };
 $("hint").onclick=()=>{if(pending){const w=pending[0].animal.w;$("heard").textContent=t("hintIs")+w;speak(w)}};
-$("again").onclick=start;start();
+$("tA").onclick=()=>theme("A");$("tF").onclick=()=>theme("F");$("tM").onclick=()=>theme("M");$("bBack").onclick=choose;
+function theme(x){THEME=x;$("stepTheme").style.display="none";$("stepSize").style.display="block"}
+$("b8").onclick=()=>begin(8);$("b16").onclick=()=>begin(16);
+$("again").onclick=choose;choose();
 </script>
 </body></html>

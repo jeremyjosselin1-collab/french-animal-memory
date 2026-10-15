@@ -39,7 +39,7 @@ function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex
 </script>
 <script>
 let list,i,word,hole,filled,score;const ABC="abcdeghilmnoprstuz";
-function start(){list=shuffle(ANIMALS);i=0;score=0;$("end").style.display="none";next()}
+function start(){list=shuffle(ANIMALS).slice(0,10);i=0;score=0;$("end").style.display="none";next()}
 function next(){if(i>=list.length)return endScreen(t("l_end",score));
   const a=list[i++];word=a.w;$("emo").textContent=a.e;$("score").textContent=t("l_word",i,list.length);
   const idx=[...word].map((c,k)=>k).filter(k=>/[a-zéèáíóú]/.test(word[k]));
