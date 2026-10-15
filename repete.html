@@ -44,14 +44,14 @@ function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add
 function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-const GOAL=10;let idx=0,count=0,busy=false,listening=false,rec=null,counted=[];
+const GOAL=10;let ROUND=shuffle(ANIMALS).slice(0,10);let idx=0,count=0,busy=false,listening=false,rec=null,counted=[];
 for(let i=0;i<GOAL;i++){const d=document.createElement("div");d.className="dot";$("dots").appendChild(d)}
-function show(){const a=ANIMALS[idx];count=0;busy=false;const e=$("emoji");e.classList.remove("fly");void e.offsetWidth;e.textContent=a.e;$("word").textContent="";render();$("msg").textContent=SR?t("r_go"):t("r_nosr")}
+function show(){const a=ROUND[idx];count=0;busy=false;const e=$("emoji");e.classList.remove("fly");void e.offsetWidth;e.textContent=a.e;$("word").textContent="";render();$("msg").textContent=SR?t("r_go"):t("r_nosr")}
 function render(){$("count").textContent=count+" / "+GOAL;[...$("dots").children].forEach((d,i)=>d.classList.toggle("f",i<count))}
 function add(n){if(busy||n<=0)return;count=Math.min(GOAL,count+n);render();if(count>=GOAL)win()}
 function win(){busy=true;$("emoji").classList.add("fly");speak(t("bravo"));$("msg").textContent=t("r_bravo");
-  setTimeout(()=>{idx++;counted=[];if(idx>=ANIMALS.length){stop();endScreen(t("r_end"))}else show()},1900)}
-function hits(x){const ws=names(ANIMALS[idx]);return norm(x).split(" ").filter(w=>ws.includes(w)).length}
+  setTimeout(()=>{idx++;counted=[];if(idx>=ROUND.length){stop();endScreen(t("r_end"))}else show()},1900)}
+function hits(x){const ws=names(ROUND[idx]);return norm(x).split(" ").filter(w=>ws.includes(w)).length}
 function startRec(){
   rec=new SR();rec.lang=SRLANG;rec.continuous=true;rec.interimResults=true;counted=[];
   rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const n=hits(e.results[i][0].transcript),prev=counted[i]||0;if(n>prev){counted[i]=n;add(n-prev)}}
@@ -62,10 +62,10 @@ function startRec(){
 }
 function stop(){listening=false;try{rec&&rec.stop()}catch(x){}ui()}
 function ui(){$("mic").textContent=listening?t("stop"):t("listen");$("mic").classList.toggle("on",listening)}
-$("say").onclick=()=>{const w=ANIMALS[idx].w;$("word").textContent=w;speak(w)};
+$("say").onclick=()=>{const w=ROUND[idx].w;$("word").textContent=w;speak(w)};
 $("mic").onclick=()=>{if(!SR){$("tap").style.display="inline-block";$("msg").textContent=t("r_nosr");return}
   if(listening)stop();else{listening=true;ui();$("msg").textContent=t("listening");startRec()}};
 $("tap").onclick=()=>add(1);if(!SR)$("tap").style.display="inline-block";
-$("again").onclick=()=>{idx=0;$("end").style.display="none";show()};ui();show();
+$("again").onclick=()=>{idx=0;ROUND=shuffle(ANIMALS).slice(0,10);$("end").style.display="none";show()};ui();show();
 </script>
 </body></html>
