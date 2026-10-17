@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
+<script src="proto/fx.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-family:inherit;font-size:1.25rem;padding:14px 20px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+button.say{background:#0984e3}button.on{background:#d63031}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.25)}}
+.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.step{display:none;max-width:520px;margin:12px auto;padding:0 14px}
+.step h2{font-size:1.8rem;margin:8px 0 0}.step .en{font-size:1rem;color:#666;margin:2px 0 14px}
+.step .big{display:block;width:100%;margin:12px 0;padding:18px 10px;font-size:2rem;font-weight:bold;border-radius:22px;box-shadow:0 4px 10px #0003}
+.big small,.lv small{display:block;font-size:1rem;font-weight:normal;margin-top:4px}
+.back{background:#b2bec3!important;font-size:1.1rem!important;padding:12px 10px!important}
+#ops{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}#ops .mix{grid-column:1/-1}
+#ops .big{font-size:clamp(1.1rem,5vw,1.6rem);padding:16px 4px;overflow-wrap:anywhere}#ops .big span{display:block;font-size:2.6rem}
+#lvls{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0}
+.lv{display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border-radius:20px;text-align:left;box-shadow:0 4px 10px #0003}
+.lv .n{font-size:2.2rem;font-weight:bold;width:1.4em;text-align:center;flex:none}.lv .tx{flex:1;font-size:1.3rem;font-weight:bold}.lv .st{font-size:1.3rem;flex:none;white-space:nowrap}
+.lv.lock{background:#b2bec3!important;cursor:default}
+#game{display:none;max-width:560px;margin:0 auto;padding:0 12px}
+#score{font-size:1.15rem;font-weight:bold;margin:4px}
+#bar{height:12px;background:#0001;border-radius:8px;overflow:hidden;margin:4px auto 8px;max-width:420px}#bar div{height:100%;width:0;background:linear-gradient(90deg,#00b894,#fdcb6e);transition:width .4s}
+#eq{font-size:clamp(2.6rem,13vw,4.4rem);font-weight:bold;letter-spacing:2px;margin:4px 0;white-space:nowrap}
+#eq .q{color:#e17055}
+#words{font-size:1.3rem;color:#6c5ce7;font-weight:bold;min-height:1.5em}
+#vis{margin:8px auto;min-height:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 12px;font-size:1.9rem;line-height:1.15}
+#vis .grp{display:inline-flex;flex-wrap:wrap;max-width:6.2em;justify-content:center;background:#fff;border-radius:14px;padding:4px 6px;box-shadow:0 2px 6px #0002}
+#vis .rows{display:flex;flex-direction:column;gap:3px;background:#fff;border-radius:14px;padding:6px 10px;box-shadow:0 2px 6px #0002}
+#vis .gone{opacity:.25;position:relative}#vis .opsym{font-size:2.2rem;font-weight:bold;color:#e17055}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:440px;margin:10px auto}
+.opt{margin:0;background:#fff;color:#333;font-size:2.4rem;font-weight:bold;padding:14px 6px;box-shadow:0 3px 8px #0002;line-height:1.1}
+.opt small{display:block;font-size:1rem;font-weight:normal;color:#555;min-height:1.2em}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}.hintc{box-shadow:0 0 0 4px #fdcb6e,0 3px 8px #0002!important}
+#msg{min-height:1.6em;font-size:1.25rem;padding:0 8px;font-weight:bold}
+#heard{min-height:1.3em;font-size:1rem;color:#666}
+#tools button{font-size:1.1rem;padding:10px 14px}
+#vs{display:none;justify-content:center;gap:10px;max-width:480px;margin:6px auto;padding:0 10px}
+.pl{flex:1;display:flex;align-items:center;gap:8px;padding:8px;border-radius:18px;background:#fff;border:4px solid transparent;opacity:.55;box-shadow:0 2px 6px #0002;transition:all .25s;text-align:left;min-width:0}
+.pl.act{opacity:1;transform:scale(1.04);box-shadow:0 0 0 3px #fff,0 4px 14px #0004}
+.pl .av{width:48px;height:48px;border-radius:50%;flex:none;background:#a29bfe center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:bold}
+.pl .nm{font-weight:bold;font-size:1.05rem;line-height:1.1}.pl .pt{font-size:1.8rem;font-weight:bold;line-height:1}
+#turn{display:none;font-size:1.2rem;font-weight:bold;margin:4px auto;padding:8px;border-radius:14px;color:#fff;width:calc(100% - 24px);max-width:480px}
+#end{display:none;max-width:560px;margin:10px auto;padding:0 14px}
+#stars{font-size:3.6rem;letter-spacing:6px}#endtxt{font-size:1.5rem;font-weight:bold;margin:6px 0}#endEn{color:#666;margin-bottom:8px}
+#recap{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:10px 0}
+.chip{margin:0;padding:8px 12px;background:#fff;color:#333;font-size:1.05rem;box-shadow:0 2px 6px #0002;border-radius:14px}.chip b{color:#6c5ce7;margin-right:6px;font-size:1.3rem}
+</style></head><body>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gMaths" data-i="0"></h1>
+
+<div class="step" id="stepMode"><h2 data-t="x_mode"></h2><div class="en">How do you want to play?</div>
+<button class="big" id="mSolo" style="background:#00b894">🧒 <span data-t="x_solo"></span><small>Play alone and win stars</small></button>
+<button class="big" id="mBat" style="background:#e17055">⚔️ <span data-t="x_bat"></span><small>Mateo vs Felipe, taking turns</small></button></div>
+
+<div class="step" id="stepOp"><h2 data-t="x_op"></h2><div class="en">Pick an operation</div><div id="ops"></div>
+<button class="big back" id="opBack">← <span data-t="x_back"></span><small>Back</small></button></div>
+
+<div class="step" id="stepLv"><h2 id="lvTitle"></h2><div class="en" id="lvEn"></div><div id="lvls"></div>
+<button class="big back" id="lvBack">← <span data-t="x_back"></span><small>Back</small></button></div>
+
+<div id="vs"></div><div id="turn"></div>
+<div id="game">
+<div id="score"></div><div id="bar"><div></div></div>
+<div id="eq"></div><div id="words"></div><div id="vis"></div>
+<div id="msg"></div>
+<div id="opts"></div>
+<div id="tools"><button class="say" id="hear" data-t="hearBtn"></button><button id="mic" style="background:#6c5ce7" data-t="talk"></button></div>
+<div id="heard"></div>
+</div>
+
+<div id="end"><div id="stars"></div><div id="endtxt"></div><div id="endEn"></div>
+<h2 style="margin:12px 0 0;font-size:1.3rem" data-t="x_recap"></h2><div class="en" style="color:#666">Number words you practised (tap to hear)</div><div id="recap"></div>
+<button id="again" data-t="again"></button><button id="next" style="display:none;background:#6c5ce7"></button><button id="choose" style="background:#e17055"></button><br><a class="menu" href="./" data-t="menu"></a></div>
+<script>
+/* ---------- number words 0–144 ---------- */
+const FR_U=["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","onze","douze","treize","quatorze","quinze","seize"];
+const FR_T={2:"vingt",3:"trente",4:"quarante",5:"cinquante",6:"soixante"};
+function frW(n){
+  if(n>=100)return "cent"+(n>100?" "+frW(n-100):"");
+  if(n<=16)return FR_U[n];
+  if(n<20)return "dix-"+FR_U[n-10];
+  const t=Math.floor(n/10),u=n%10;
+  if(t<7)return FR_T[t]+(u==0?"":u==1?" et un":"-"+FR_U[u]);
+  if(t==7)return "soixante"+(u==1?" et onze":"-"+frW(10+u));
+  if(t==8)return u==0?"quatre-vingts":"quatre-vingt-"+FR_U[u];
+  return "quatre-vingt-"+frW(10+u);
+}
+const ES_U=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"];
+const ES_T={3:"treinta",4:"cuarenta",5:"cincuenta",6:"sesenta",7:"setenta",8:"ochenta",9:"noventa"};
+function esW(n){
+  if(n==100)return "cien";
+  if(n>100)return "ciento "+esW(n-100);
+  if(n<30)return ES_U[n];
+  const t=Math.floor(n/10),u=n%10;return ES_T[t]+(u?" y "+ES_U[u]:"");
+}
+const W=LANG=="es"?esW:frW;
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+
+/* ---------- strings ---------- */
+Object.assign(S.fr,{x_mode:"Comment jouer ?",x_solo:"Solo",x_bat:"Mode bataille",x_op:"Choisis une opération !",x_back:"Retour",x_lv:"Choisis ton niveau !",x_recap:"Les nombres du jour",
+ x_q:(r,n,m)=>`Question ${r} / ${n} · ❌ ${m}`,x_ask:s=>`Combien font ${s} ?`,x_say:(s,c)=>`${cap(s)} égale ${c} !`,x_go:"Touche la bonne réponse !",x_no:k=>`Pas ${k}, essaie encore !`,x_show:"Regarde la réponse qui brille !",
+ x_end:(m)=>m==0?"Parfait ! Aucune erreur !":`Bravo ! ${m} erreur${m>1?"s":""}`,x_unlock:"Niveau suivant débloqué !",x_nextLv:"Niveau suivant ➡️",x_other:"Autre jeu",x_lvN:n=>"Niveau "+n,x_wins:n=>`${n} gagne la bataille !`,x_draw:"Égalité ! Bravo à tous les deux !",x_pts:(n,p)=>`${n} : ${p} point${p>1?"s":""}`,x_turnOf:n=>`C'est au tour de ${n} !`,x_yourTurn:"À toi !",
+ OPS:{add:["addition","plus"],sub:["soustraction","moins"],mul:["multiplication","fois"],div:["division","divisé par"],mix:["mélange",""]},
+ LV:{add:["jusqu'à 5","jusqu'à 10","jusqu'à 20","2 chiffres","2 chiffres avec retenue"],sub:["jusqu'à 5","jusqu'à 10","jusqu'à 20","2 chiffres","2 chiffres avec retenue"],
+  mul:["× 1 et × 2","× 5 et × 10","tables de 1 à 5","tables de 1 à 10","× 11 et × 12"],div:["÷ 1 et ÷ 2","÷ 5 et ÷ 10","tables de 1 à 5","tables de 1 à 10","÷ 11 et ÷ 12"],mix:["très facile","facile","moyen","difficile","très difficile"]}});
+Object.assign(S.es,{x_mode:"¿Cómo querés jugar?",x_solo:"Solo",x_bat:"Modo batalla",x_op:"¡Elegí una operación!",x_back:"Volver",x_lv:"¡Elegí tu nivel!",x_recap:"Los números de hoy",
+ x_q:(r,n,m)=>`Pregunta ${r} / ${n} · ❌ ${m}`,x_ask:s=>`¿Cuánto es ${s}?`,x_say:(s,c)=>`¡${cap(s)} es igual a ${c}!`,x_go:"¡Tocá la respuesta correcta!",x_no:k=>`¡${cap(k)} no, probá otra vez!`,x_show:"¡Mirá la respuesta que brilla!",
+ x_end:(m)=>m==0?"¡Perfecto! ¡Ningún error!":`¡Muy bien! ${m} error${m>1?"es":""}`,x_unlock:"¡Nivel siguiente desbloqueado!",x_nextLv:"Nivel siguiente ➡️",x_other:"Otro juego",x_lvN:n=>"Nivel "+n,x_wins:n=>`¡${n} gana la batalla!`,x_draw:"¡Empate! ¡Bravo a los dos!",x_pts:(n,p)=>`${n}: ${p} punto${p>1?"s":""}`,x_turnOf:n=>`¡Le toca a ${n}!`,x_yourTurn:"¡Te toca!",
+ OPS:{add:["suma","más"],sub:["resta","menos"],mul:["multiplicación","por"],div:["división","dividido"],mix:["mezcla",""]},
+ LV:{add:["hasta 5","hasta 10","hasta 20","2 cifras","2 cifras, con dificultad"],sub:["hasta 5","hasta 10","hasta 20","2 cifras","2 cifras, con dificultad"],
+  mul:["× 1 y × 2","× 5 y × 10","tablas del 1 al 5","tablas del 1 al 10","× 11 y × 12"],div:["÷ 1 y ÷ 2","÷ 5 y ÷ 10","tablas del 1 al 5","tablas del 1 al 10","÷ 11 y ÷ 12"],mix:["muy fácil","fácil","intermedio","difícil","muy difícil"]}});
+const OPEN={add:"addition",sub:"subtraction",mul:"multiplication",div:"division",mix:"mix of everything"};
+const LVEN={add:["within 5","within 10","within 20","two digits, no carrying","two digits with carrying"],sub:["within 5","within 10","within 20","two digits, no borrowing","two digits with borrowing"],
+ mul:["times 1 and 2","times 5 and 10","tables 1 to 5","tables 1 to 10","times 11 and 12"],div:["divide by 1 and 2","divide by 5 and 10","tables 1 to 5","tables 1 to 10","divide by 11 and 12"],mix:["very easy","easy","medium","hard","very hard"]};
+const OPICON={add:"➕",sub:"➖",mul:"✖️",div:"➗",mix:"🎲"},SYM={add:"+",sub:"−",mul:"×",div:"÷"},OPCOL={add:"#00b894",sub:"#0984e3",mul:"#e17055",div:"#6c5ce7",mix:"#e84393"};
+header();document.title=document.querySelector("h1").textContent;
+
+/* ---------- problem generators (never negative, always exact) ---------- */
+const $=id=>document.getElementById(id);
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pickA=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function addPair(L){let a,b,ta,tb,ua,ub;
+  switch(L){
+    case 0:a=R(1,4);b=R(1,5-a);break;
+    case 1:a=R(1,9);b=R(1,10-a);break;
+    case 2:do{a=R(2,18);b=R(1,20-a)}while(a+b<=10);break;
+    case 3:ta=R(1,8);tb=R(1,9-ta);ua=R(0,9);ub=R(0,9-ua);a=10*ta+ua;b=10*tb+ub;break;
+    default:ta=R(1,7);tb=R(1,8-ta);ua=R(1,9);ub=R(10-ua,9);a=10*ta+ua;b=10*tb+ub}
+  return [a,b]}
+const MULT=[[1,2],[5,10],[1,2,3,4,5],[2,3,4,5,6,7,8,9,10],[11,12]];
+function mulPair(L){const t=pickA(MULT[L]),o=L==2?R(1,5):L==3?R(2,10):L==4?R(1,12):R(1,10);return [o,t]}
+function gen(op,L){
+  if(op=="mix")op=pickA(["add","sub","mul","div"]);
+  let a,b,c;
+  if(op=="add"){[a,b]=addPair(L);c=a+b}
+  else if(op=="sub"){const [x,y]=addPair(L);a=x+y;b=y;c=x}
+  else if(op=="mul"){const [o,tb]=mulPair(L);if(Math.random()<.5){a=o;b=tb}else{a=tb;b=o}c=a*b}
+  else{const [o,tb]=mulPair(L);a=o*tb;b=tb;c=o}
+  return {op,a,b,c,L}}
+function choices(c){const s=new Set([c]),sp=c<10?3:c<30?5:10;let k=0;
+  while(s.size<4&&k++<200){const d=k<40&&c>=20&&Math.random()<.4?pickA([-10,10]):R(-sp,sp);const v=c+d;if(v>=0&&v<=144)s.add(v)}
+  for(let v=0;s.size<4;v++)s.add(v);return shuffle([...s])}
+function phrase(q){return W(q.a)+" "+S[LANG].OPS[q.op][1]+" "+W(q.b)}
+
+/* ---------- visual help for easy levels ---------- */
+const OBJ=["🍎","🍓","🍪","⭐","🐟","🎈","🐣","🍊","🚗","🌸"];
+function visual(q){const v=$("vis");v.innerHTML="";const e=pickA(OBJ),sp=x=>{const s=document.createElement("span");s.innerHTML=x;return s};
+  const grp=(n,cls)=>{const g=document.createElement("span");g.className="grp";for(let i=0;i<n;i++){const s=sp(e);if(cls&&i>=n-cls)s.className="gone";g.appendChild(s)}return g};
+  const rows=(r,c)=>{const g=document.createElement("div");g.className="rows";for(let i=0;i<r;i++)g.appendChild(sp(e.repeat(c)));return g};
+  if(q.op=="add"&&q.c<=10){v.append(grp(q.a),Object.assign(sp("+"),{className:"opsym"}),grp(q.b))}
+  else if(q.op=="sub"&&q.a<=10){v.append(grp(q.a,q.b))}
+  else if(q.op=="mul"&&q.L<=2&&q.c<=30){v.append(rows(q.a,q.b))}
+  else if(q.op=="div"&&q.L<=2&&q.a<=30){v.append(rows(q.c,q.b))}
+}
+
+/* ---------- stars (per kid, per language, per operation) ---------- */
+const KID=localStorage.getItem("fr_current")||"x",KEY="maths_"+KID+"_"+LANG;
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function stars(op){const s=load()[op]||[];return [0,1,2,3,4].map(i=>s[i]||0)}
+function saveStar(op,L,n){const all=load(),s=stars(op);s[L]=Math.max(s[L],n);all[op]=s;try{localStorage.setItem(KEY,JSON.stringify(all))}catch(e){}}
+const unlocked=(op,L)=>BATTLE||L==0||stars(op)[L-1]>0;
+
+/* ---------- screens ---------- */
+let BATTLE=false,OP="add",LV=0,starter=0;
+const KIDS2=["Mateo","Felipe"],KCOL={Mateo:"#0984e3",Felipe:"#e17055"};
+function show(id){["stepMode","stepOp","stepLv"].forEach(x=>$(x).style.display=x==id?"block":"none");
+  ["game","end"].forEach(x=>$(x).style.display=x==id?"block":"none");if(id!="game"){$("vs").style.display="none";$("turn").style.display="none"}}
+function renderOps(){const o=$("ops");o.innerHTML="";["add","sub","mul","div","mix"].forEach(op=>{const b=document.createElement("button");b.className="big"+(op=="mix"?" mix":"");b.dataset.op=op;b.style.background=OPCOL[op];
+  b.innerHTML=`<span>${OPICON[op]}</span>${cap(S[LANG].OPS[op][0])}<small>${cap(OPEN[op])}</small>`;b.onclick=()=>{OP=op;renderLv()};o.appendChild(b)});show("stepOp")}
+function renderLv(){$("lvTitle").textContent=OPICON[OP]+" "+t("x_lv");$("lvEn").textContent="Pick your level · "+OPEN[OP];const box=$("lvls");box.innerHTML="";const st=stars(OP);
+  S[LANG].LV[OP].forEach((name,i)=>{const b=document.createElement("button");const ok=unlocked(OP,i);b.className="lv"+(ok?"":" lock");b.style.background=OPCOL[OP];b.dataset.lv=i;
+    b.innerHTML=`<span class="n">${ok?i+1:"🔒"}</span><span class="tx"></span><span class="st">${BATTLE?"":"⭐".repeat(st[i])+"☆".repeat(3-st[i])}</span>`;
+    b.querySelector(".tx").innerHTML=name+"<small>"+LVEN[OP][i]+"</small>";b.onclick=()=>{if(!ok){b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");SFX.bad();return}LV=i;start()};box.appendChild(b)});
+  show("stepLv")}
+
+/* ---------- battle bar ---------- */
+let cur=0,bs=[0,0];
+function renderVs(){const v=$("vs");v.style.display=BATTLE?"flex":"none";$("turn").style.display=BATTLE?"block":"none";v.innerHTML="";if(!BATTLE)return;
+  KIDS2.forEach((n,i)=>{const d=document.createElement("div");d.className="pl"+(i==cur?" act":"");d.style.borderColor=i==cur?KCOL[n]:"transparent";
+    d.innerHTML='<div class="av"></div><div><div class="nm"></div><div class="pt"></div></div>';
+    const ph=localStorage.getItem("fr_photo_"+n),a=d.querySelector(".av");a.style.backgroundColor=KCOL[n];if(ph)a.style.backgroundImage="url("+ph+")";else a.textContent=n[0];
+    d.querySelector(".nm").textContent=n;d.querySelector(".pt").textContent=bs[i];v.appendChild(d)});
+  const tb=$("turn");tb.style.background=KCOL[KIDS2[cur]];tb.textContent="👉 "+t("x_turnOf",KIDS2[cur])}
+
+/* ---------- game ---------- */
+const N=10;let round,miss,qMiss,q,lock,seen,used;
+function start(){round=0;miss=0;seen=new Set();used=new Set();bs=[0,0];cur=starter;show("game");next()}
+function next(){
+  if(round>=N)return finish();round++;qMiss=0;lock=false;
+  let k=0;do{q=gen(OP,LV)}while(seen.has(q.op+q.a+"_"+q.b)&&k++<30);seen.add(q.op+q.a+"_"+q.b);
+  [q.a,q.b,q.c].forEach(x=>used.add(x));
+  if(BATTLE&&round>1)cur=1-cur;renderVs();
+  $("score").textContent=t("x_q",round,N,miss);$("bar").firstChild.style.width=(round-1)*10+"%";
+  $("eq").innerHTML=`${q.a} ${SYM[q.op]} ${q.b} = <span class="q">?</span>`;$("words").textContent=phrase(q)+" = ?";$("msg").textContent=t("x_go");$("heard").textContent="";
+  visual(q);const g=$("opts");g.innerHTML="";
+  choices(q.c).forEach(v=>{const b=document.createElement("button");b.className="opt";b.dataset.v=v;b.innerHTML=v+"<small></small>";b.onclick=()=>answer(v,b);g.appendChild(b)});
+  ask()}
+function ask(){speak(t("x_ask",phrase(q)))}
+function answer(v,b){if(lock)return;b=b||document.querySelector(`.opt[data-v="${v}"]`);
+  if(v===q.c){lock=true;if(b)b.classList.add("ok");document.querySelectorAll(".opt").forEach(o=>o.querySelector("small").textContent=W(+o.dataset.v));
+    $("eq").innerHTML=`${q.a} ${SYM[q.op]} ${q.b} = <span class="q pop">${q.c}</span>`;$("words").textContent=phrase(q)+" = "+W(q.c);
+    const s=t("x_say",phrase(q),W(q.c));$("msg").textContent="✅ "+s;speak(s);SFX.good();
+    if(b){const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,24)}
+    if(BATTLE&&qMiss==0){bs[cur]++;renderVs()}
+    setTimeout(next,2600)}
+  else{if(b){if(b.classList.contains("no"))return;b.classList.add("no");b.querySelector("small").textContent=W(v)}
+    miss++;qMiss++;SFX.bad();$("score").textContent=t("x_q",round,N,miss);$("msg").textContent=t("x_no",W(v));speak(t("x_no",W(v)));
+    if(qMiss>=2){const c=document.querySelector(`.opt[data-v="${q.c}"]`);c.classList.add("hintc");$("msg").textContent=t("x_show")}}}
+function starsFor(m){return m==0?3:m<=2?2:1}
+function finish(){$("bar").firstChild.style.width="100%";show("end");$("next").style.display="none";
+  $("choose").textContent=t("x_other");
+  if(BATTLE){const [a,b]=bs,w=a==b?-1:a>b?0:1;$("stars").textContent=w<0?"🤝":"🏆";
+    $("endtxt").innerHTML="";const h=document.createElement("div");h.textContent=w<0?t("x_draw"):t("x_wins",KIDS2[w]);$("endtxt").appendChild(h);
+    KIDS2.forEach((n,i)=>{const d=document.createElement("div");d.textContent=(w==i?"🏆 ":"")+t("x_pts",n,bs[i]);d.style.cssText="font-size:1.3rem;color:"+KCOL[n];$("endtxt").appendChild(d)});
+    $("endEn").textContent=w<0?"It's a draw!":KIDS2[w]+" wins! (1 point for each answer right first time)";speak(h.textContent);starter=1-starter}
+  else{const n=starsFor(miss),had=stars(OP)[LV];saveStar(OP,LV,n);$("stars").textContent="⭐".repeat(n)+"☆".repeat(3-n);
+    let txt=t("x_end",miss);if(LV<4&&had==0)txt+=(miss?". ":" ")+t("x_unlock");$("endtxt").textContent=txt;
+    $("endEn").textContent=(miss==0?"Perfect, no mistakes!":miss+" mistake"+(miss>1?"s":"")+".")+(LV<4&&had==0?" Next level unlocked!":"");
+    if(LV<4){$("next").textContent=t("x_nextLv");$("next").style.display="inline-block"}speak(txt)}
+  const r=$("recap");r.innerHTML="";[...used].sort((x,y)=>x-y).forEach(n=>{const c=document.createElement("button");c.className="chip";c.innerHTML=`<b>${n}</b>`;c.append(W(n));c.onclick=()=>{speak(W(n));c.classList.remove("pop");void c.offsetWidth;c.classList.add("pop")};r.appendChild(c)});
+  confetti();SFX.good()}
+
+/* ---------- mic: accept digits or words ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const WMAP=new Map();for(let n=0;n<=144;n++)WMAP.set(norm(W(n)),n);
+WMAP.set(LANG=="es"?"un":"une",1);if(LANG=="es"){WMAP.set("veinte y uno",21);WMAP.set("ciento",100)}else WMAP.set("quatre vingt",80);
+function numbersIn(txt){const out=[],d=txt.match(/\d+/g);if(d)d.forEach(x=>out.push(+x));
+  const tk=norm(txt).split(" ").filter(Boolean);for(let i=0;i<tk.length;){let hit=0;
+    for(let L=Math.min(5,tk.length-i);L>0;L--){const p=tk.slice(i,i+L).join(" ");if(WMAP.has(p)){out.push(WMAP.get(p));i+=L;hit=1;break}}if(!hit)i++}
+  return out}
+$("mic").onclick=()=>{if(lock)return;const h=$("heard");if(!SR){h.textContent=t("nosr");return}
+  const r=new SR();r.lang=SRLANG;r.interimResults=false;r.maxAlternatives=5;h.textContent=t("listening");$("mic").classList.add("on");
+  r.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);h.textContent=t("heard",alts[0]);
+    if(alts.some(a=>numbersIn(a).includes(q.c)))answer(q.c);else{const got=numbersIn(alts[0]);if(got.length)answer(got[got.length-1]);else $("msg").textContent=t("tryAgain")}};
+  r.onerror=e=>{h.textContent=e.error==="not-allowed"?t("allowMic"):t("nothing")};r.onend=()=>$("mic").classList.remove("on");try{r.start()}catch(e){}};
+if(!SR)$("mic").style.display="none";
+
+$("hear").onclick=ask;
+$("mSolo").onclick=()=>{BATTLE=false;renderOps()};$("mBat").onclick=()=>{BATTLE=true;starter=0;renderOps()};
+$("opBack").onclick=()=>show("stepMode");$("lvBack").onclick=renderOps;
+$("again").onclick=start;$("next").onclick=()=>{LV++;start()};$("choose").onclick=()=>show("stepMode");
+show("stepMode");
+window.MATHS={frW,esW,gen,choices,numbersIn,stars};
+</script>
+</body></html>
