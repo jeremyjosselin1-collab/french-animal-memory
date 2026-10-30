@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
+<script src="proto/fx.js"></script>
+<script src="conv-data.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-family:inherit;font-size:1.15rem;padding:12px 18px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer;box-shadow:0 4px 0 #0002}
+button:active{transform:translateY(2px);box-shadow:none}
+button small,.sub{display:block;font-size:.8rem;font-weight:normal;opacity:.85;margin-top:2px}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.15)}}
+.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.scr{display:none;max-width:560px;margin:0 auto;padding:0 12px}
+/* path */
+#stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:6px 0}
+#stats span{background:#fff;border-radius:14px;padding:6px 12px;font-weight:bold;box-shadow:0 1px 4px #0002}
+#base{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:14px;padding:4px 6px 4px 12px;box-shadow:0 1px 4px #0002;font-size:.95rem;margin:4px}
+#base button{margin:0;padding:6px 10px;font-size:.95rem;background:#dfe6e9;color:#333;box-shadow:none}#base button.sel{background:#6c5ce7;color:#fff}
+.unit{border-radius:20px;color:#fff;padding:12px 14px;margin:18px 0 6px;text-align:left;box-shadow:0 4px 10px #0002}
+.unit b{font-size:1.3rem;display:block}.unit .sub{opacity:.95}
+.nodes{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 0 6px}
+.node{width:76px;height:76px;border-radius:50%;font-size:2rem;padding:0;margin:0;position:relative;box-shadow:0 6px 0 #0003}
+.node.lock{background:#b2bec3!important;cursor:default}.node.done{background:#fdcb6e!important}
+.node.cur{animation:bob 1.2s infinite}@keyframes bob{50%{transform:translateY(-6px)}}
+.node .go{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);background:#fff;color:#333;font-size:.9rem;font-weight:bold;padding:4px 10px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px #0003}
+/* lesson */
+#lesson{padding-bottom:190px}
+#ltop{display:flex;align-items:center;gap:10px;margin:6px 0}
+#quit{background:none;color:#636e72;font-size:1.6rem;padding:4px 8px;margin:0;box-shadow:none}
+#lbar{flex:1;height:16px;background:#dfe6e9;border-radius:10px;overflow:hidden}#lbar div{height:100%;width:0;background:#00b894;transition:width .4s;border-radius:10px}
+#hearts{font-weight:bold;color:#d63031;font-size:1.2rem;white-space:nowrap}
+#fox{display:flex;align-items:flex-start;gap:8px;text-align:left;margin:10px 0}
+#fox .f{font-size:3rem;line-height:1}#fox .bub{background:#fff;border:2px solid #dfe6e9;border-radius:16px;padding:8px 12px;font-weight:bold;font-size:1.15rem;flex:1}
+#fox .bub small{display:block;font-weight:normal;color:#636e72;font-size:.85rem}
+#prompt{font-size:1.5rem;font-weight:bold;margin:8px 0;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+#prompt .spk{background:#0984e3;padding:8px 12px;font-size:1.3rem;margin:0}
+#prompt .pic{font-size:3rem}
+.bigspk{font-size:2.6rem!important;padding:14px 30px!important;background:#0984e3!important;border-radius:24px!important}
+#answer{min-height:58px;border-bottom:2px solid #dfe6e9;border-top:2px solid #dfe6e9;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;margin:10px 0;align-items:center;justify-content:center}
+#bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
+.tile{background:#fff;color:#333;border:2px solid #dfe6e9;box-shadow:0 3px 0 #dfe6e9;margin:0;padding:8px 12px;font-size:1.15rem}
+.tile.used{visibility:hidden}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}
+.card{background:#fff;color:#333;border:2px solid #dfe6e9;box-shadow:0 4px 0 #dfe6e9;margin:0;padding:14px 4px;font-size:2.8rem;line-height:1.1}
+.card small{font-size:.95rem;color:#333;opacity:1}
+.card.sel,.tile.sel{border-color:#74b9ff;background:#dff3ff;box-shadow:0 4px 0 #74b9ff}
+.card.hl,.tile.hl,.opt.hl{outline:4px solid #fdcb6e}
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.match .tile{width:100%;padding:12px 6px;font-size:1.1rem}
+.match .tile.ok{background:#55efc4;border-color:#00b894;opacity:.5}.match .tile.bad{background:#fab1a0}
+.opts{display:flex;flex-direction:column;gap:10px;margin:10px 0}.opt{background:#fff;color:#333;border:2px solid #dfe6e9;box-shadow:0 3px 0 #dfe6e9;margin:0;font-size:1.25rem}
+.opt.sel{border-color:#74b9ff;background:#dff3ff}
+.blank{display:inline-block;min-width:80px;border-bottom:3px solid #333;margin:0 4px}
+#foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #dfe6e9;padding:8px 12px 14px;z-index:5}
+#foot .in{max-width:560px;margin:0 auto}
+#fb{display:none;text-align:left;font-weight:bold;font-size:1.2rem;padding:4px 2px}#fb small{display:block;font-weight:normal;font-size:1rem}
+#foot.good{background:#d7ffb8}#foot.good #fb{color:#58a700}#foot.bad{background:#ffdfe0}#foot.bad #fb{color:#ea2b2b}
+#check{width:100%;margin:6px 0 0;font-size:1.3rem;font-weight:bold;padding:14px}#check:disabled{background:#dfe6e9;color:#999;box-shadow:none}
+#foot.bad #check{background:#ff4b4b}
+.showme{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px auto}
+.showme b{font-size:.95rem}.showme button{margin:0;padding:6px 10px;font-size:.9rem;background:#ffeaa7;color:#333;box-shadow:0 2px 0 #0002}
+#help{display:none;background:#fffbe9;border:3px dashed #fdcb6e;border-radius:14px;padding:8px 10px;margin:4px 0;font-size:1.1rem;text-align:left}
+#heard{min-height:1.2em;color:#666;font-size:.95rem}
+#done .big{font-size:5rem}#done .xp{display:inline-block;background:#fdcb6e;border-radius:16px;padding:10px 18px;font-size:1.4rem;font-weight:bold;margin:8px}
+</style></head><body>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gLingo" data-i="0"></h1>
+
+<div class="scr" id="path"><div id="stats"></div><div id="base"></div><div id="units"></div></div>
+
+<div class="scr" id="lesson">
+<div id="ltop"><button id="quit">✖</button><div id="lbar"><div></div></div><div id="hearts"></div></div>
+<div id="fox"><div class="f">🦊</div><div class="bub" id="ask"></div></div>
+<div id="ex"></div><div id="heard"></div>
+<div id="foot"><div class="in"><div class="showme" id="sm"></div><div id="help"></div><div id="fb"></div><button id="check"></button></div></div>
+</div>
+
+<div class="scr" id="done"><div class="big" id="dEmoji"></div><h2 id="dTitle"></h2><div id="dSub"></div><div class="xp" id="dXp"></div><br>
+<button id="dGo" style="background:#00b894;font-size:1.3rem;padding:14px 30px"></button></div>
+<script>
+const C=CONV,BASE=C.BASE,T=LANG,$=id=>document.getElementById(id);
+const U={
+ check:{fr:"Vérifier",es:"Comprobar",en:"Check"},cont:{fr:"Continuer",es:"Continuar",en:"Continue"},
+ great:{fr:["Excellent !","Génial !","Bravo !","Super !"],es:["¡Excelente!","¡Genial!","¡Muy bien!","¡Bárbaro!"],en:["Excellent!","Great!","Well done!","Super!"]},
+ sol:{fr:"Bonne réponse :",es:"Respuesta correcta:",en:"Correct answer:"},
+ pic:{fr:x=>`Lequel est « ${x} » ?`,es:x=>`¿Cuál es « ${x} »?`,en:x=>`Which one is "${x}"?`},
+ trB:{fr:"Traduis cette phrase",es:"Traducí esta frase",en:"Translate this sentence"},
+ listen:{fr:"Écoute et écris ce que tu entends",es:"Escuchá y escribí lo que oís",en:"Tap what you hear"},
+ match:{fr:"Relie les paires",es:"Uní los pares",en:"Match the pairs"},
+ blank:{fr:"Complète la phrase",es:"Completá la frase",en:"Fill in the blank"},
+ speak:{fr:"Lis à voix haute",es:"Leé en voz alta",en:"Say this out loud"},
+ cant:{fr:"Je ne peux pas parler maintenant",es:"Ahora no puedo hablar",en:"Can't speak now"},
+ show:{fr:"Montre-moi",es:"Mostrame",en:"Show me"},my:{fr:"Ma langue",es:"Mi idioma",en:"My language"},
+ start:{fr:"COMMENCER",es:"EMPEZAR",en:"START"},xp:{fr:"XP",es:"XP",en:"XP"},
+ done:{fr:"Leçon terminée !",es:"¡Lección terminada!",en:"Lesson complete!"},doneS:{fr:(a)=>`${a} % de bonnes réponses`,es:(a)=>`${a} % de respuestas correctas`,en:(a)=>`${a}% correct`},
+ out:{fr:"Plus de cœurs !",es:"¡No quedan corazones!",en:"Out of hearts!"},outS:{fr:"Pas grave, on réessaie !",es:"¡No pasa nada, probemos otra vez!",en:"No problem, let's try again!"},
+ retry:{fr:"Réessayer",es:"Reintentar",en:"Try again"},streak:{fr:n=>`🔥 ${n} jour${n>1?"s":""}`,es:n=>`🔥 ${n} día${n>1?"s":""}`,en:n=>`${n}-day streak`},
+ lesson:{fr:n=>"Leçon "+n,es:n=>"Lección "+n,en:n=>"Lesson "+n},sayOk:{fr:"Bien dit !",es:"¡Muy bien dicho!",en:"Well said!"},
+ UNITS:{greet:{fr:"Bonjour et merci",es:"Hola y gracias",en:"Hello and thank you"},daily:{fr:"La vie de tous les jours",es:"Todos los días",en:"Every day"},
+  animal:{fr:"Les animaux",es:"Los animales",en:"Animals"},colour:{fr:"Les couleurs",es:"Los colores",en:"Colours"},family:{fr:"La famille",es:"La familia",en:"Family"},
+  object:{fr:"Les objets",es:"Los objetos",en:"Things"},food:{fr:"À manger",es:"La comida",en:"Food"},number:{fr:"Les nombres",es:"Los números",en:"Numbers"},qa:{fr:"Parlons ensemble",es:"Charlemos",en:"Let's talk"}}};
+const u=(k,...a)=>{const v=U[k][T];return typeof v=="function"?v(...a):v},ub=(k,...a)=>{const v=U[k][BASE];return typeof v=="function"?v(...a):v};
+const bi=(k,...a)=>`${u(k,...a)}<small>${ub(k,...a)}</small>`;
+header();document.title=t("gLingo")[0];
+const UNITS=[["greet","👋","#00b894"],["daily","☀️","#0984e3"],["animal","🐶","#e17055"],["colour","🎨","#e84393"],["family","👨‍👩‍👧","#6c5ce7"],["object","🧸","#00cec9"],["food","🍎","#d63031"],["number","🔢","#fdcb6e"],["qa","💬","#2d3436"]],LPU=3;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},pick=C.pick;
+function pop(el,c){el.classList.remove(c||"pop");void el.offsetWidth;el.classList.add(c||"pop")}
+function show(id){["path","lesson","done"].forEach(x=>$(x).style.display=x==id?"block":"none");scrollTo(0,0)}
+
+/* progress per kid + language */
+const KEY="lingo_"+C.KID+"_"+T,today=()=>new Date().toISOString().slice(0,10);
+function load(){try{return Object.assign({done:{},xp:0,streak:0,last:""},JSON.parse(localStorage.getItem(KEY)))}catch(e){return{done:{},xp:0,streak:0,last:""}}}
+function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+
+/* ---------- vocabulary + sentences per unit (all with en / fr / es) ---------- */
+const L3=f=>({en:f("en"),fr:f("fr"),es:f("es")});
+function vocab(un){switch(un){
+  case "animal":return C.AN.map(x=>({e:x.e,tx:L3(L=>C.indef(x,L))}));
+  case "colour":return C.COL.map(c=>({e:c.e,tx:{en:c.en,fr:c.fr[0],es:c.es[0]}}));
+  case "family":return C.FAM.map(x=>({e:x.e,tx:L3(L=>C.poss(x,L))}));
+  case "object":return C.OBJ.map(x=>({e:x.e,tx:L3(L=>C.indef(x,L))}));
+  case "food":return C.FOOD.map(x=>({e:x.e,tx:L3(L=>C.indef(x,L))}));
+  case "number":return C.NUMS.en.map((_,n)=>({e:n<10?n+"️⃣":"🔟",tx:L3(L=>C.NUMS[L][n])}));
+  default:{const s=sentences(un).filter(x=>x.tx[T].split(" ").length<=4);const seen=new Set();return s.filter(x=>!seen.has(x.e)&&seen.add(x.e))}}}
+function sentences(un){const out=[];C.P.forEach((p,i)=>{if(p.u==un){const r=C.phrase(i);out.push({e:r.pic,tx:r.tx})}});
+  C.Q.forEach((q,i)=>{if(q.u==un){const r=C.qa(i);out.push({e:r.pic,tx:r.q},{e:r.pic,tx:r.a})}});return out}
+
+/* ---------- tiles ---------- */
+const PUN=/^[¡¿«»"“”.,!?…:;]+|[¡¿«»"“”.,!?…:;]+$/g,NAMES=new Set(["Mateo","Felipe","Tata","Max","Lola","Coco","Pipo","Nala","Rocky","Léo","Leo"]);
+function words(s){return s.split(/\s+/).map(w=>w.replace(PUN,"")).filter(Boolean).map((w,i)=>i==0&&!NAMES.has(w)?w[0].toLowerCase()+w.slice(1):w)}
+const same=(a,b)=>a.join(" ").toLowerCase()==b.join(" ").toLowerCase();
+
+/* ---------- lesson builder ---------- */
+let LES,queue,qi,hearts,right,wrong,ex,picked,state;
+function build(un,l){const S=shuffle(sentences(un)),V=shuffle(vocab(un)),types=l==0?["pic","match","tr2b","pic","listen","tr2b","blank","tr2t"]:l==1?["pic","tr2b","listen","match","tr2t","blank","speak","tr2b"]:["tr2t","listen","blank","match","tr2b","speak","tr2t","listen"];
+  let si=0;const sent=()=>S[si++%S.length];
+  return types.filter(x=>x!="speak"||SR).map(type=>{
+    if(type=="pic"){const opts=shuffle(V).slice(0,3),a=pick(opts);return {type,a,opts,ans:a.tx}}
+    if(type=="match"){const ps=shuffle(V).slice(0,4);return {type,ps,ans:null}}
+    if(type=="blank"){const s=sent(),w=words(s.tx[T]);const vw=V.map(v=>v.tx[T].split(" ").pop().toLowerCase());
+      let k=w.findIndex(x=>vw.includes(x.toLowerCase()));if(k<0){const c=w.map((x,i)=>[x,i]).filter(([x])=>x.length>2);k=c.length?pick(c)[1]:0}
+      const pool=[...new Set(S.flatMap(x=>words(x.tx[T])).concat(vw).filter(x=>x.toLowerCase()!=w[k].toLowerCase()&&x.length>1))];
+      return {type,s,w,k,opts:shuffle([w[k],...shuffle(pool).slice(0,2)]),ans:s.tx}}
+    const s=sent(),from=type=="tr2b"?T:BASE,to=type=="tr2b"?BASE:T;
+    if(type=="speak")return {type,s,ans:s.tx};
+    const aw=words(s.tx[to]),others=[...new Set(S.flatMap(x=>words(x.tx[to])))].filter(x=>!aw.some(y=>y.toLowerCase()==x.toLowerCase()));
+    return {type,s,from,to,aw,bank:shuffle(aw.concat(shuffle(others).slice(0,Math.min(4,Math.max(2,aw.length>>1))))),ans:s.tx}})}
+function startLesson(un,l){LES={un,l};queue=build(un,l);qi=0;hearts=5;right=0;wrong=0;show("lesson");render()}
+
+/* ---------- render one exercise ---------- */
+function render(){ex=queue[qi];picked=[];state="ans";$("lbar").firstChild.style.width=(qi/queue.length*100)+"%";$("hearts").textContent="❤️ "+hearts;
+  const f=$("foot");f.className="";$("fb").style.display="none";$("help").style.display="none";$("heard").textContent="";
+  $("check").innerHTML=bi("check");$("check").disabled=true;$("check").style.display=ex.type=="match"?"none":"block";
+  const box=$("ex");box.innerHTML="";const ask=$("ask");
+  showBar();
+  if(ex.type=="pic"){ask.innerHTML=bi("pic",ex.a.tx[T]);const p=el("div","",box);p.id="prompt";spk(p,ex.a.tx[T]);
+    const g=el("div","cards",box);ex.opts.forEach(o=>{const b=el("button","card",g);b.innerHTML=o.e;b.v=o;b.onclick=()=>{g.querySelectorAll(".card").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");picked=[o];speak(o.tx[T]);$("check").disabled=false}});
+    speak(ex.a.tx[T])}
+  else if(ex.type=="match"){ask.innerHTML=bi("match");const g=el("div","match",box);let selL=null,selR=null,left=ex.ps.length;
+    const L=shuffle(ex.ps),R=shuffle(ex.ps),col=[[],[]];
+    L.forEach((p,i)=>{[p,R[i]].forEach((q,s)=>{const b=el("button","tile",g);b.textContent=q.tx[s?BASE:T];b.v=q;b.side=s;col[s].push(b);
+      b.onclick=()=>{if(b.classList.contains("ok"))return;if(!s)speak(q.tx[T]);
+        col[s].forEach(x=>x.classList.remove("sel"));b.classList.add("sel");if(s)selR=b;else selL=b;
+        if(selL&&selR){if(selL.v===selR.v){[selL,selR].forEach(x=>{x.classList.remove("sel");x.classList.add("ok")});SFX.pop();if(--left==0){right++;setTimeout(()=>feedback(true),300)}}
+          else{const a=selL,c=selR;[a,c].forEach(x=>{x.classList.remove("sel");x.classList.add("bad")});SFX.bad();loseHeart();setTimeout(()=>[a,c].forEach(x=>x.classList.remove("bad")),500)}selL=selR=null}}})})}
+  else if(ex.type=="blank"){ask.innerHTML=bi("blank");const p=el("div","",box);p.id="prompt";spk(p,ex.s.tx[T]);const s=el("div","",p);
+    s.innerHTML=ex.w.map((w,i)=>i==ex.k?'<span class="blank" id="bl">&nbsp;</span>':esc(w)).join(" ");
+    const o=el("div","opts",box);ex.opts.forEach(w=>{const b=el("button","opt",o);b.textContent=w;b.onclick=()=>{o.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("bl").textContent=w;picked=[w];$("check").disabled=false}})}
+  else if(ex.type=="speak"){ask.innerHTML=bi("speak");const p=el("div","",box);p.id="prompt";spk(p,ex.s.tx[T]);el("span","",p).textContent=ex.s.tx[T];
+    const m=el("button","bigspk",box);m.textContent="🎤";m.onclick=listen;const c=el("button","",box);c.style.background="#b2bec3";c.innerHTML=bi("cant");c.onclick=()=>{qi++;next()};speak(ex.s.tx[T])}
+  else{ask.innerHTML=ex.type=="listen"?bi("listen"):bi("trB");const p=el("div","",box);p.id="prompt";
+    if(ex.type=="listen"){const b=el("button","bigspk",p);b.textContent="🔊";b.onclick=()=>speak(ex.s.tx[T]);speak(ex.s.tx[T])}
+    else{el("span","pic",p).textContent=ex.s.e;if(ex.from==T)spk(p,ex.s.tx[T]);el("span","",p).textContent=ex.s.tx[ex.from];if(ex.from==T)speak(ex.s.tx[T])}
+    const a=el("div","",box);a.id="answer";const bank=el("div","",box);bank.id="bank";
+    ex.bank.forEach(w=>{const b=el("button","tile",bank);b.textContent=w;b.onclick=()=>{if(state!="ans"||b.classList.contains("used"))return;b.classList.add("used");if(ex.to==T)speak(w);
+      const c=el("button","tile",a);c.textContent=w;picked.push(w);c.onclick=()=>{if(state!="ans")return;picked.splice([...a.children].indexOf(c),1);c.remove();b.classList.remove("used");$("check").disabled=!picked.length};$("check").disabled=false}})}}
+function el(tag,cls,parent){const e=document.createElement(tag);if(cls)e.className=cls;parent.appendChild(e);return e}
+function spk(p,txt){const b=el("button","spk",p);b.textContent="🔊";b.onclick=()=>speak(txt)}
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]);
+
+/* ---------- check / feedback ---------- */
+function correct(){if(ex.type=="pic")return picked[0]===ex.a;if(ex.type=="blank")return picked[0]==ex.w[ex.k];return same(picked,ex.aw)}
+function loseHeart(){hearts--;$("hearts").textContent="❤️ "+Math.max(0,hearts);pop($("hearts"),"shake")}
+function feedback(ok){state="fb";const f=$("foot");f.className=ok?"good":"bad";$("fb").style.display="block";
+  if(ok){$("fb").innerHTML="✅ "+pick(U.great[T])+`<small>${pick(U.great[BASE])}</small>`;SFX.good();const r=$("check").getBoundingClientRect();burst(r.left+r.width/2,r.top,18)}
+  else{const L=ex.to||T;$("fb").innerHTML=bi("sol")+`<small style="font-size:1.15rem;font-weight:bold">${esc(ex.type=="pic"?ex.a.tx[T]:ex.ans[L])}</small>`;SFX.bad()}
+  if(ex.ans&&(ex.to||T)==T)speak(ex.type=="pic"?ex.a.tx[T]:ex.ans[T]);
+  $("check").style.display="block";$("check").disabled=false;$("check").innerHTML=bi("cont")}
+$("check").onclick=()=>{
+  if(state=="fb"){if(hearts<=0)return outOfHearts();qi++;return next()}
+  const ok=correct();if(ok)right++;else{wrong++;loseHeart();queue.push(Object.assign({},ex,{bank:ex.bank&&shuffle(ex.bank)}))}feedback(ok)};
+function next(){if(qi>=queue.length)return finish();render()}
+function outOfHearts(){show("done");$("dEmoji").textContent="💔";$("dTitle").innerHTML=bi("out");$("dSub").innerHTML=bi("outS");$("dXp").style.display="none";
+  $("dGo").innerHTML=bi("retry");$("dGo").onclick=()=>startLesson(LES.un,LES.l)}
+function finish(){const s=load(),k=LES.un+"-"+LES.l,acc=Math.round(right/Math.max(1,right+wrong)*100),xp=10+(wrong==0?5:0);
+  s.done[k]=1;s.xp+=xp;const d=today();if(s.last!=d){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);s.streak=s.last==y?s.streak+1:1;s.last=d}save(s);
+  show("done");$("dEmoji").textContent="🦊🎉";$("dTitle").innerHTML=bi("done");$("dSub").innerHTML=bi("doneS",acc);$("dXp").style.display="inline-block";$("dXp").textContent="+"+xp+" XP · "+u("streak",s.streak);
+  $("dGo").innerHTML=bi("cont");$("dGo").onclick=path;confetti();SFX.good();speak(u("done"))}
+
+/* ---------- Show me ---------- */
+function showBar(){const el2=$("sm");el2.innerHTML=`<b>👀 ${ub("show")}</b>`+C.HELP.map(L=>`<button data-l="${L}">${C.FLAG[L]} ${C.LNAME[L]}</button>`).join("");
+  el2.querySelectorAll("button").forEach(b=>b.onclick=()=>hint(b.dataset.l))}
+function hint(L){const h=$("help");h.style.display="block";let tx;
+  if(ex.type=="match")tx=ex.ps.map(p=>`${p.e} ${esc(p.tx[T])} = ${esc(p.tx[L])}`).join("<br>");
+  else if(ex.type=="pic"){tx=ex.a.e+" "+esc(ex.a.tx[L]);document.querySelectorAll(".card").forEach(c=>c.classList.toggle("hl",c.v===ex.a))}
+  else tx=esc(ex.ans[L]);
+  h.innerHTML=`<b>${C.FLAG[L]}</b> `+tx;if(L==T&&ex.ans)speak(ex.type=="pic"?ex.a.tx[T]:ex.ans[T])}
+
+/* ---------- speaking ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function listen(){const h=$("heard"),target=norm(ex.s.tx[T]).split(" ");const r=new SR();r.lang=SRLANG;r.maxAlternatives=5;h.textContent=t("listening");
+  r.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);h.textContent=t("heard",alts[0]);
+    const best=Math.max(...alts.map(a=>{const w=norm(a).split(" ");return target.filter(x=>w.includes(x)).length/target.length}));
+    if(best>=.6){right++;feedback(true)}else{h.textContent+=" — "+t("tryAgain");speak(ex.s.tx[T])}};
+  r.onerror=e=>{h.textContent=e.error==="not-allowed"?t("allowMic"):t("nothing")};try{r.start()}catch(e){}}
+
+/* ---------- path ---------- */
+function path(){show("path");const s=load();$("stats").innerHTML=`<span>${u("streak",s.streak)}</span><span>⭐ ${s.xp} XP</span>`;
+  $("base").style.display=T=="es"?"inline-flex":"none";$("base").innerHTML=`<span>${U.my[BASE]} :</span>`+["en","fr"].map(L=>`<button data-l="${L}" class="${L==BASE?"sel":""}">${C.FLAG[L]} ${C.LNAME[L]}</button>`).join("");
+  $("base").querySelectorAll("button").forEach(b=>b.onclick=()=>C.setBase(b.dataset.l));
+  const box=$("units");box.innerHTML="";let open=true,curSet=false;
+  UNITS.forEach(([un,ic,col],ui)=>{const h=el("div","unit",box);h.style.background=col;h.innerHTML=`<b>${ic} ${U.UNITS[un][T]}</b><span class="sub">${U.UNITS[un][BASE]}</span>`;
+    const ns=el("div","nodes",box);
+    for(let l=0;l<LPU;l++){const k=un+"-"+l,done=!!s.done[k],b=el("button","node",ns);b.style.background=col;b.style.marginLeft=[0,-100,100][l]+"px";
+      b.dataset.k=k;b.title=u("lesson",l+1);
+      if(done){b.classList.add("done");b.textContent="✓"}else if(open){b.classList.add("cur");b.innerHTML=`${ic}<span class="go">${u("start")}</span>`;open=false;curSet=true}else{b.classList.add("lock");b.textContent="🔒"}
+      if(done||b.classList.contains("cur"))b.onclick=()=>startLesson(un,l);else b.onclick=()=>pop(b,"shake")}});
+  const c=document.querySelector(".node.cur");if(c)setTimeout(()=>c.scrollIntoView({block:"center"}),50)}
+$("quit").onclick=path;
+path();
+window.LINGO={build,words,same,vocab,sentences};
+</script>
+</body></html>
