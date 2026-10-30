@@ -57,6 +57,7 @@ button.say{background:#0984e3}button.tap{background:#fdcb6e;color:#333}button.on
 <div id="picker"><div id="stepMode"><h2 data-t="m_mode"></h2><div class="en" data-t="m_modeEn"></div>
 <button id="mSolo" style="background:#00b894">🧒 <span data-t="m_solo"></span><small data-t="m_soloS"></small></button>
 <button id="mBat" style="background:#e17055">⚔️ <span data-t="m_bat"></span><small data-t="m_batS"></small></button></div>
+<div id="stepPair" style="display:none"><h2 data-t="who"></h2><div class="en">Who is playing?</div><div id="pairs"></div></div>
 <div id="stepTheme" style="display:none"><h2 data-t="m_theme"></h2><div class="en" data-t="m_themeEn"></div>
 <button id="tA" style="background:#00b894">🐶 <span data-t="m_tA"></span><small data-t="m_tAs"></small></button>
 <button id="tF" style="background:#e17055">🍎 <span data-t="m_tF"></span><small data-t="m_tFs"></small></button>
@@ -73,14 +74,14 @@ function pop(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add
 function endScreen(txt){$("endtxt").textContent=txt;$("end").style.display="flex";speak(t("bravo"))}
 </script>
 <script>
-Object.assign(S.fr,{m_mode:"Comment jouer ?",m_modeEn:"How do you want to play?",m_solo:"Solo",m_soloS:"Play alone",m_bat:"Mode bataille",m_batS:"Mateo vs Felipe, taking turns",
+Object.assign(S.fr,{m_mode:"Comment jouer ?",m_modeEn:"How do you want to play?",m_solo:"Solo",m_soloS:"Play alone",m_bat:"Mode bataille",m_batS:"Two players, taking turns",
 m_yourTurn:"À toi !",m_turnOf:n=>`C'est au tour de ${n} !`,m_again2:n=>`Une paire ! ${n} rejoue !`,m_miss:n=>`Pas pareil ! Au tour de ${n}`,
 m_bscore:(a,b)=>`${a} contre ${b}`,m_wins:n=>`${n} gagne la bataille !`,m_draw:"Égalité ! Bravo à tous les deux !",m_pairsN:(n,c)=>`${n} : ${c} paire${c>1?"s":""}`,m_rev:"⚔️ Revanche",m_revEn:"Rematch, other player starts"});
-Object.assign(S.es,{m_mode:"¿Cómo querés jugar?",m_modeEn:"How do you want to play?",m_solo:"Solo",m_soloS:"Play alone",m_bat:"Modo batalla",m_batS:"Mateo vs Felipe, taking turns",
+Object.assign(S.es,{m_mode:"¿Cómo querés jugar?",m_modeEn:"How do you want to play?",m_solo:"Solo",m_soloS:"Play alone",m_bat:"Modo batalla",m_batS:"Two players, taking turns",
 m_yourTurn:"¡Te toca!",m_turnOf:n=>`¡Le toca a ${n}!`,m_again2:n=>`¡Un par! ¡${n} juega de nuevo!`,m_miss:n=>`¡No son iguales! Le toca a ${n}`,
 m_bscore:(a,b)=>`${a} contra ${b}`,m_wins:n=>`¡${n} gana la batalla!`,m_draw:"¡Empate! ¡Bravo a los dos!",m_pairsN:(n,c)=>`${n}: ${c} par${c>1?"es":""}`,m_rev:"⚔️ Revancha",m_revEn:"Rematch, other player starts"});
 header();document.title=document.querySelector('h1').textContent;
-const KIDS2=["Mateo","Felipe"],KCOL={Mateo:"#0984e3",Felipe:"#e17055"};
+let KIDS2=KIDS.slice(0,2);
 let BATTLE=false,cur=0,starter=0,bs=[0,0];
 function renderVs(){const v=$("vs");v.style.display=BATTLE?"flex":"none";$("turn").style.display=BATTLE?"block":"none";if(!BATTLE){v.innerHTML="";return}
   v.innerHTML="";KIDS2.forEach((n,i)=>{const d=document.createElement("div");d.className="pl"+(i==cur?" act":"");d.id="pl"+i;d.style.borderColor=i==cur?KCOL[n]:"transparent";
@@ -97,7 +98,7 @@ let PAIRS=4,THEME="A";
 function themePool(n){if(THEME=="A")return shuffle(ANIMALS).slice(0,n);if(THEME=="F")return shuffle(FOODS).slice(0,n);const h=n/2;return shuffle([...shuffle(ANIMALS).slice(0,h),...shuffle(FOODS).slice(0,h)])}
 const grid=$("grid"),status=$("status"),panel=$("panel");
 let first=null,lock=false,pending=null,cleared=0,tries=0;
-function choose(){grid.innerHTML="";grid.style.display="none";$("end").style.display="none";panel.style.display="none";$("score").textContent="";status.textContent="";$("picker").style.display="block";$("stepMode").style.display="block";$("stepTheme").style.display="none";$("stepSize").style.display="none";BATTLE=false;$("rematch").style.display="none";renderVs()}
+function choose(){grid.innerHTML="";grid.style.display="none";$("end").style.display="none";panel.style.display="none";$("score").textContent="";status.textContent="";$("picker").style.display="block";$("stepMode").style.display="block";$("stepPair").style.display="none";$("stepTheme").style.display="none";$("stepSize").style.display="none";BATTLE=false;$("rematch").style.display="none";renderVs()}
 function begin(n){PAIRS=n/2;$("picker").style.display="none";grid.style.display="grid";start()}
 function start(){
   grid.innerHTML="";first=null;lock=false;pending=null;cleared=0;tries=0;panel.style.display="none";$("end").style.display="none";bs=[0,0];cur=BATTLE?starter:0;renderVs();
@@ -131,7 +132,7 @@ $("tA").onclick=()=>theme("A");$("tF").onclick=()=>theme("F");$("tM").onclick=()
 function theme(x){THEME=x;$("stepTheme").style.display="none";$("stepSize").style.display="block"}
 $("b8").onclick=()=>begin(8);$("b16").onclick=()=>begin(16);
 $("mSolo").onclick=()=>modePick(false);$("mBat").onclick=()=>modePick(true);
-function modePick(b){BATTLE=b;starter=0;$("stepMode").style.display="none";$("stepTheme").style.display="block"}
+function modePick(b){BATTLE=b;starter=0;$("stepMode").style.display="none";if(b){$("stepPair").style.display="block";pairPicker($("pairs"),p=>{KIDS2=p;$("stepPair").style.display="none";$("stepTheme").style.display="block"})}else $("stepTheme").style.display="block"}
 $("rematch").onclick=()=>{starter=1-starter;start()};
 $("again").onclick=choose;choose();
 </script>

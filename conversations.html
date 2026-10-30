@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Jeux des animaux</title>
+<link rel="icon" href="data:,">
+<script src="i18n.js"></script>
+<script src="proto/fx.js"></script>
+<script src="conv-data.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#fff7e6;color:#333;text-align:center;min-height:100vh;overflow-x:hidden}
+.menu{display:inline-block;margin:10px 4px;padding:10px 16px;background:#6c5ce7;color:#fff;border-radius:12px;text-decoration:none;font-size:1.1rem}
+h1{font-size:1.6rem;margin:6px 0}
+button{font-family:inherit;font-size:1.2rem;padding:12px 18px;border:0;border-radius:14px;margin:6px;background:#00b894;color:#fff;cursor:pointer}
+small,.sub{display:block;font-size:.85rem;font-weight:normal;opacity:.85;margin-top:2px}
+button.say{background:#0984e3}button.on{background:#d63031}
+#kid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:bold;margin:6px}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.15)}}
+.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.scr{display:none;max-width:560px;margin:0 auto;padding:0 12px}
+.big{display:block;width:100%;margin:12px 0;padding:18px 10px;font-size:1.8rem;font-weight:bold;border-radius:22px;box-shadow:0 4px 10px #0003}
+.big .ic{font-size:2.6rem;display:block}.big .pr{font-size:.95rem;font-weight:bold;opacity:1;margin-top:6px;background:#fff3;border-radius:10px;display:inline-block;padding:2px 10px}
+#base{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:14px;padding:4px 6px 4px 12px;box-shadow:0 1px 4px #0002;font-size:.95rem;margin:4px}
+#base button{margin:0;padding:6px 10px;font-size:.95rem;background:#dfe6e9;color:#333}#base button.sel{background:#6c5ce7;color:#fff}
+#score{font-size:1.1rem;font-weight:bold;margin:4px}
+#bar{height:12px;background:#0001;border-radius:8px;overflow:hidden;margin:4px auto 8px;max-width:420px}#bar div{height:100%;width:0;background:linear-gradient(90deg,#00b894,#fdcb6e);transition:width .4s}
+#task{font-size:1.2rem;font-weight:bold;margin:6px 0}
+#hearBig{font-size:2.6rem;padding:10px 26px;border-radius:50%;background:#0984e3}
+#qpic{font-size:4rem;line-height:1.2;margin:4px 0}
+#qtext{font-size:1.6rem;font-weight:bold;color:#6c5ce7;min-height:1.2em;padding:0 6px}
+#opts{display:grid;gap:12px;margin:12px auto;max-width:480px}
+#opts.pics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opt{margin:0;background:#fff;color:#333;box-shadow:0 3px 8px #0002;line-height:1.2;font-size:1.25rem;padding:14px 10px;text-align:center}
+.pics .opt{font-size:2.6rem;padding:14px 4px;min-height:96px;word-break:break-all}
+.ok{background:#55efc4!important}.no{background:#fab1a0!important}.hl{box-shadow:0 0 0 4px #fdcb6e,0 3px 8px #0002!important}
+#reveal{display:none;background:#fff;border-radius:18px;padding:10px 14px;margin:8px auto;box-shadow:0 2px 8px #0002;max-width:480px}
+#reveal .t{font-size:1.5rem;font-weight:bold;color:#00b894}
+#msg{min-height:1.5em;font-size:1.15rem;font-weight:bold;padding:0 6px}
+#heard{min-height:1.2em;color:#666;font-size:.95rem}
+#after{display:none}
+.showme{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:10px auto;padding:8px;background:#ffeaa7;border-radius:16px;max-width:480px}
+.showme b{font-size:1.05rem}.showme button{margin:0;padding:8px 12px;font-size:1rem;background:#fff;color:#333;box-shadow:0 1px 4px #0002}.showme button.sel{background:#fdcb6e}
+.help{display:none;background:#fffbe9;border:3px dashed #fdcb6e;border-radius:16px;padding:10px 12px;margin:6px auto;max-width:480px;font-size:1.15rem;text-align:left}
+.help .fl{font-size:1.3rem;margin-right:6px}
+#list{text-align:left;margin:8px 0 20px}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:8px 10px;margin:8px 0;box-shadow:0 2px 6px #0002;cursor:pointer}
+.row .p{font-size:1.8rem;flex:none;min-width:2.2em;max-width:3.4em;text-align:center;word-break:break-all;line-height:1.1}.row .tx{flex:1;min-width:0;overflow-wrap:anywhere}.row .t{font-weight:bold;font-size:1.1rem}
+.row .tr{font-size:.95rem;color:#636e72;margin-top:2px}.row .tr .fl{margin-right:4px}
+.tabs{display:flex;gap:8px;justify-content:center}.tabs button{flex:1;background:#b2bec3;font-size:1.05rem;padding:10px 6px}.tabs button.sel{background:#6c5ce7}
+#stars{font-size:3.4rem;letter-spacing:6px}#endtxt{font-size:1.5rem;font-weight:bold;margin:6px 0}
+</style></head><body>
+<a class="menu" href="./" data-t="menu">🏠 Menu</a>
+<div id="kid"></div>
+<h1 data-t="gConv" data-i="0"></h1>
+
+<div class="scr" id="home">
+<div id="base"></div>
+<button class="big" id="goP" style="background:#00b894"></button>
+<button class="big" id="goQ" style="background:#e17055"></button>
+<button class="big" id="goL" style="background:#6c5ce7"></button>
+</div>
+
+<div class="scr" id="game">
+<div id="score"></div><div id="bar"><div></div></div>
+<div id="task"></div>
+<div id="qpic"></div><div id="qtext"></div>
+<button id="hearBig" class="say">🔊</button>
+<div id="opts"></div>
+<div id="msg"></div>
+<div id="reveal"><div class="t" id="revT"></div></div>
+<div id="after"><button class="say" id="mic"></button><button id="next" style="background:#6c5ce7"></button></div>
+<div id="heard"></div>
+<div class="showme" id="sm"></div><div class="help" id="help"></div>
+</div>
+
+<div class="scr" id="browse">
+<div class="tabs"><button id="tP"></button><button id="tQ"></button></div>
+<div class="showme" id="sm2"></div>
+<button id="shuf" style="background:#fdcb6e;color:#333"></button>
+<div id="list"></div>
+<button id="bBack" style="background:#b2bec3"></button>
+</div>
+
+<div class="scr" id="end"><div id="stars"></div><div id="endtxt"></div>
+<div id="endList" style="text-align:left"></div>
+<button id="again" data-t="again"></button><button id="home2" style="background:#e17055"></button><br><a class="menu" href="./" data-t="menu"></a></div>
+<script>
+const C=CONV,BASE=C.BASE,$=id=>document.getElementById(id);
+const U={
+ ph:{fr:"Les phrases",es:"Las frases",en:"Phrases"},phS:{fr:"100 phrases de tous les jours",es:"100 frases de todos los días",en:"100 everyday phrases"},
+ qa:{fr:"Questions et réponses",es:"Preguntas y respuestas",en:"Questions & answers"},qaS:{fr:"100 questions avec leurs réponses",es:"100 preguntas con sus respuestas",en:"100 questions and their answers"},
+ all:{fr:"Toutes les phrases",es:"Todas las frases",en:"Browse them all"},allS:{fr:"Écoute et lis",es:"Escuchá y leé",en:"Listen and read"},
+ listen:{fr:"Écoute et touche la bonne image !",es:"¡Escuchá y tocá el dibujo correcto!",en:"Listen and tap the right picture!"},
+ pickA:{fr:"Choisis la bonne réponse !",es:"¡Elegí la respuesta correcta!",en:"Pick the right answer!"},
+ say:{fr:"🎤 Répète",es:"🎤 Repetí",en:"Say it"},next:{fr:"Suivant ➡️",es:"Siguiente ➡️",en:"Next"},
+ no:{fr:"Pas tout à fait, essaie encore !",es:"¡Casi! Probá otra vez.",en:"Not quite, try again!"},
+ yes:{fr:"✅ Bravo !",es:"✅ ¡Muy bien!",en:"Well done!"},sayOk:{fr:"🎉 Super, bien dit !",es:"🎉 ¡Genial, muy bien dicho!",en:"Great, well said!"},sayNo:{fr:"Presque ! Écoute et répète encore.",es:"¡Casi! Escuchá y repetí otra vez.",en:"Almost! Listen and say it again."},
+ show:{fr:"Montre-moi",es:"Mostrame",en:"Show me"},my:{fr:"Ma langue",es:"Mi idioma",en:"My language"},
+ q:{fr:(r,n,s)=>`Question ${r} / ${n} · ⭐ ${s}`,es:(r,n,s)=>`Pregunta ${r} / ${n} · ⭐ ${s}`,en:(r,n,s)=>`Question ${r} of ${n}`},
+ learned:{fr:n=>`${n} / 100 apprises`,es:n=>`${n} / 100 aprendidas`,en:n=>`${n} / 100 learned`},
+ shuf:{fr:"🎲 Changer les mots",es:"🎲 Cambiar las palabras",en:"New words"},back:{fr:"← Retour",es:"← Volver",en:"Back"},other:{fr:"Autre jeu",es:"Otro juego",en:"Other game"},
+ end:{fr:(s,n)=>`${s} / ${n} du premier coup !`,es:(s,n)=>`¡${s} / ${n} a la primera!`,en:(s,n)=>`${s} of ${n} right first time`},recap:{fr:"Tes phrases :",es:"Tus frases:",en:"Your phrases (tap to hear)"}};
+const u=(k,...a)=>{const v=U[k][LANG];return typeof v=="function"?v(...a):v},ub=(k,...a)=>{const v=U[k][BASE];return typeof v=="function"?v(...a):v};
+const bi=(k,...a)=>`${u(k,...a)}<small>${ub(k,...a)}</small>`;
+header();document.title=t("gConv")[0];
+
+/* progress: phrases / questions answered right first time, per kid and language */
+const KEY="conv_"+C.KID+"_"+LANG;
+function load(){try{return Object.assign({p:[],q:[]},JSON.parse(localStorage.getItem(KEY)))}catch(e){return{p:[],q:[]}}}
+function learn(m,i){const s=load();if(!s[m].includes(i)){s[m].push(i);try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pop(el,c){el.classList.remove(c||"pop");void el.offsetWidth;el.classList.add(c||"pop")}
+function show(id){["home","game","browse","end"].forEach(x=>$(x).style.display=x==id?"block":"none")}
+
+/* home */
+function home(){show("home");const s=load();
+  $("base").innerHTML=`<span>${U.my[BASE]} :</span>`+["en","fr"].filter(L=>L!=LANG).map(L=>`<button data-l="${L}" class="${L==BASE?"sel":""}">${C.FLAG[L]} ${C.LNAME[L]}</button>`).join("");
+  $("base").style.display=LANG=="es"?"inline-flex":"none";$("base").querySelectorAll("button").forEach(b=>b.onclick=()=>C.setBase(b.dataset.l));
+  $("goP").innerHTML=`<span class="ic">💬</span>${bi("ph")}<span class="pr">${u("learned",s.p.length)}</span>`;
+  $("goQ").innerHTML=`<span class="ic">❓</span>${bi("qa")}<span class="pr">${u("learned",s.q.length)}</span>`;
+  $("goL").innerHTML=`<span class="ic">📖</span>${bi("all")}`}
+
+/* Show me: hint in any language */
+function showBar(el,onPick,sel){el.innerHTML=`<b>👀 ${ub("show")}</b>`+C.HELP.map(L=>`<button data-l="${L}" class="${L==sel?"sel":""}">${C.FLAG[L]} ${C.LNAME[L]}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(x=>x.classList.toggle("sel",x==b));onPick(b.dataset.l)})}
+
+/* rounds */
+const N=10;let MODE,items,round,good,cur,lock,helped,miss;
+function start(m){MODE=m;const s=load()[m],pool=(m=="p"?C.P:C.Q).map((_,i)=>i),fresh=shuffle(pool.filter(i=>!s.includes(i)));
+  items=fresh.concat(shuffle(pool.filter(i=>s.includes(i)))).slice(0,N);items=shuffle(items);round=0;good=0;show("game");next()}
+function next(){if(round>=N)return finish();round++;lock=false;helped=false;miss=0;
+  $("score").textContent=u("q",round,N,good);$("bar").firstChild.style.width=(round-1)*10+"%";
+  ["reveal","after","help"].forEach(x=>$(x).style.display="none");$("msg").textContent="";$("heard").textContent="";
+  const g=$("opts");g.innerHTML="";
+  if(MODE=="p"){cur=C.phrase(items[round-1]);$("task").innerHTML=bi("listen");$("qpic").textContent="";$("qtext").textContent="";g.className="pics";
+    const opts=[cur];let k=0;while(opts.length<3&&k++<200){const o=C.phrase(Math.floor(Math.random()*C.P.length));if(o.i!=cur.i&&opts.every(x=>x.pic!=o.pic))opts.push(o)}
+    shuffle(opts).forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=o.pic;b.ok=o===cur;b.onclick=()=>answer(b);g.appendChild(b)})}
+  else{cur=C.qa(items[round-1]);$("task").innerHTML=bi("pickA");$("qpic").textContent=cur.pic;$("qtext").textContent=cur.q[LANG];g.className="";
+    const opts=[cur.a];let k=0;while(opts.length<3&&k++<200){const o=C.qa(Math.floor(Math.random()*C.Q.length));if(o.i!=cur.i&&opts.every(x=>x[LANG]!=o.a[LANG]))opts.push(o.a)}
+    shuffle(opts).forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=o[LANG];b.ok=o===cur.a;b.onclick=()=>answer(b);g.appendChild(b)})}
+  showBar($("sm"),hint);hear()}
+function hear(){speak(MODE=="p"?cur.tgt:cur.q[LANG])}
+function answer(b){if(lock)return;
+  if(MODE=="q")speak(b.textContent);
+  if(b.ok){lock=true;b.classList.add("ok");SFX.good();const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,20);
+    if(!miss&&!helped){good++;learn(MODE,cur.i)}$("score").textContent=u("q",round,N,good);$("msg").innerHTML=bi("yes");
+    $("revT").textContent=MODE=="p"?cur.tgt:cur.q[LANG]+" → "+cur.a[LANG];$("reveal").style.display="block";$("after").style.display="block";
+    setTimeout(()=>speak(MODE=="p"?cur.tgt:cur.a[LANG]),MODE=="q"?1200:300)}
+  else{if(b.classList.contains("no"))return;b.classList.add("no");pop(b,"shake");miss++;SFX.bad();$("msg").innerHTML=bi("no");if(MODE=="p")setTimeout(hear,700)}}
+function hint(L){helped=true;const h=$("help");h.style.display="block";
+  const tx=MODE=="p"?cur.tx[L]:cur.q[L]+"<br>→ <b>"+cur.a[L]+"</b>";h.innerHTML=`<span class="fl">${C.FLAG[L]}</span>`+tx;
+  document.querySelectorAll(".opt").forEach(o=>o.ok&&o.classList.add("hl"));if(L==LANG)speak(MODE=="p"?cur.tgt:cur.a[LANG])}
+function finish(){show("end");$("bar").firstChild.style.width="100%";const n=good>=9?3:good>=6?2:1;$("stars").textContent="⭐".repeat(n)+"☆".repeat(3-n);
+  $("endtxt").innerHTML=bi("end",good,N);$("home2").textContent=u("other");
+  const l=$("endList");l.innerHTML=`<h3 style="text-align:center;margin:10px 0 0">${u("recap")}</h3>`;
+  items.forEach(i=>{const it=MODE=="p"?C.phrase(i):C.qa(i);row(l,it,BASE)});confetti();SFX.good();speak(t("bravo"))}
+
+/* list rows: target text (tap to hear) + optional translation */
+function row(box,it,L){const d=document.createElement("div");d.className="row";const tg=MODE=="p"||!it.q?it.tgt:it.q[LANG]+" — "+it.a[LANG],
+  tr=it.q?it.q[L]+" — "+it.a[L]:it.tx&&it.tx[L];
+  d.innerHTML=`<span class="p"></span><div class="tx"><div class="t"></div><div class="tr"></div></div><span>🔊</span>`;d.querySelector(".p").textContent=it.pic;d.querySelector(".t").textContent=tg;
+  if(L&&L!=LANG)d.querySelector(".tr").innerHTML=`<span class="fl">${C.FLAG[L]}</span>`;if(L&&L!=LANG)d.querySelector(".tr").append(tr);
+  d.onclick=()=>{speak(it.q?it.q[LANG]+" … "+it.a[LANG]:it.tgt);pop(d)};box.appendChild(d)}
+
+/* browse */
+let BT="p",BL=null;
+function browse(){show("browse");MODE="b";$("tP").innerHTML="💬 "+bi("ph");$("tQ").innerHTML="❓ "+bi("qa");$("shuf").innerHTML=bi("shuf");$("bBack").innerHTML=bi("back");
+  $("tP").classList.toggle("sel",BT=="p");$("tQ").classList.toggle("sel",BT=="q");showBar($("sm2"),L=>{BL=L;fill()},BL);fill()}
+function fill(){const l=$("list");l.innerHTML="";(BT=="p"?C.P:C.Q).forEach((_,i)=>row(l,BT=="p"?C.phrase(i):C.qa(i),BL))}
+$("tP").onclick=()=>{BT="p";browse()};$("tQ").onclick=()=>{BT="q";browse()};$("shuf").onclick=fill;$("bBack").onclick=home;
+
+$("goP").onclick=()=>start("p");$("goQ").onclick=()=>start("q");$("goL").onclick=browse;
+$("hearBig").onclick=hear;$("next").onclick=next;$("next").innerHTML=bi("next");$("mic").innerHTML=bi("say");
+$("again").onclick=()=>start(MODE);$("home2").onclick=home;
+
+/* say it back: generous word match */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+$("mic").onclick=()=>{const h=$("heard");if(!SR){h.textContent=t("nosr");return}const target=norm(MODE=="p"?cur.tgt:cur.a[LANG]).split(" ");
+  const r=new SR();r.lang=SRLANG;r.maxAlternatives=5;h.textContent=t("listening");$("mic").classList.add("on");
+  r.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);h.textContent=t("heard",alts[0]);
+    const best=Math.max(...alts.map(a=>{const w=norm(a).split(" ");return target.filter(x=>w.includes(x)).length/target.length}));
+    if(best>=.6){$("msg").innerHTML=bi("sayOk");SFX.good();confetti()}else{$("msg").innerHTML=bi("sayNo");speak(MODE=="p"?cur.tgt:cur.a[LANG])}};
+  r.onerror=e=>{h.textContent=e.error==="not-allowed"?t("allowMic"):t("nothing")};r.onend=()=>$("mic").classList.remove("on");try{r.start()}catch(e){}};
+if(!SR)$("mic").style.display="none";
+home();
+</script>
+</body></html>
