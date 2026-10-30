@@ -37,6 +37,12 @@ es:{m_theme:"¡Elegí tu tema!",m_themeEn:"Pick your theme!",m_tA:"Animales",m_t
 function deArt(a){if(LANG=="es")return a.g=="f"?"de la ":"del ";return /^[aeiouyéè]/i.test(a.w)?"de l'":(a.g=="f"?"de la ":"du ")}
 function art(a){if(LANG=="es")return a.g=="f"?"la ":"el ";return /^[aeiouyéè]/i.test(a.w)?"l'":(a.g=="f"?"la ":"le ")}
 function un(a){return LANG=="es"?(a.g=="f"?"una":"un"):(a.g=="f"?"une":"un")}
+const KIDS=["Mateo","Felipe","Tata"],KCOL={Mateo:"#0984e3",Felipe:"#e17055",Tata:"#e84393"};
+/* Battle: buttons for every pair of kids (current kid's pairs first); onPick gets [kidA,kidB] */
+function pairPicker(box,onPick){box.innerHTML="";const me=localStorage.getItem("fr_current"),P=[];
+  KIDS.forEach((a,i)=>KIDS.slice(i+1).forEach(b=>P.push(b==me?[b,a]:[a,b])));P.sort((x,y)=>(y[0]==me)-(x[0]==me));
+  P.forEach(p=>{const b=document.createElement("button");b.className="pair";b.style.background=`linear-gradient(90deg,${KCOL[p[0]]},${KCOL[p[1]]})`;
+    b.innerHTML=`⚔️ ${p[0]} <small style="display:inline;font-size:.8em">vs</small> ${p[1]}`;b.onclick=()=>onPick(p);box.appendChild(b)})}
 const VOICE=LANG=="es"?["es-AR","es-US","es-419","es-MX","es-ES","es"]:["fr-FR","fr-CA","fr"];
 let voice=null;
 function pickVoice(){if(!("speechSynthesis" in window))return;const vs=speechSynthesis.getVoices().map(v=>[v,v.lang.replace("_","-")]);for(const c of VOICE){const f=vs.find(([v,l])=>l.toLowerCase()==c.toLowerCase())||vs.find(([v,l])=>l.toLowerCase().startsWith(c.toLowerCase()));if(f){voice=f[0];return}}}
@@ -55,12 +61,12 @@ function header(){
   const n=localStorage.getItem("fr_current");
   if(!n){k.innerHTML=`<a href="./">${t("who")}</a> `+lb}
   else{
-    const p=localStorage.getItem("fr_photo_"+n),c={Mateo:"#0984e3",Felipe:"#e17055"}[n]||"#a29bfe";
+    const p=localStorage.getItem("fr_photo_"+n),c=KCOL[n]||"#a29bfe";
     k.innerHTML=`<div class="kav" style="width:48px;height:48px;border-radius:50%;background:${c} center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem"></div><span class="kname"></span><a href="./" id="swKid" style="font-size:.9rem;font-weight:normal;color:#6c5ce7">${t("switchKid")}</a> `+lb;
     const a=k.querySelector(".kav");if(p)a.style.backgroundImage="url("+p+")";else a.textContent=n[0];k.querySelector(".kname").textContent=n;
     k.querySelector("#swKid").onclick=()=>localStorage.removeItem("fr_current");
   }
   k.querySelector("#langBtn").onclick=()=>setLang(other);
 }
-Object.assign(window,{LANG,ANIMALS:A[LANG],FOODS:FOODS[LANG],S,t,art,un,deArt,speak,norm,names,setLang,header,SRLANG:LANG=="es"?"es-AR":"fr-FR",TTS:"speechSynthesis" in window});
+Object.assign(window,{LANG,ANIMALS:A[LANG],FOODS:FOODS[LANG],S,t,art,un,deArt,speak,norm,names,setLang,header,KIDS,KCOL,pairPicker,SRLANG:LANG=="es"?"es-AR":"fr-FR",TTS:"speechSynthesis" in window});
 })();

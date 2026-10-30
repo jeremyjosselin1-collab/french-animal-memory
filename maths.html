@@ -18,6 +18,7 @@ button.say{background:#0984e3}button.on{background:#d63031}
 .step{display:none;max-width:520px;margin:12px auto;padding:0 14px}
 .step h2{font-size:1.8rem;margin:8px 0 0}.step .en{font-size:1rem;color:#666;margin:2px 0 14px}
 .step .big{display:block;width:100%;margin:12px 0;padding:18px 10px;font-size:2rem;font-weight:bold;border-radius:22px;box-shadow:0 4px 10px #0003}
+.pair{display:block;width:100%;margin:12px 0;padding:18px 10px;font-size:1.7rem;font-weight:bold;border-radius:22px;box-shadow:0 4px 10px #0003}
 .big small,.lv small{display:block;font-size:1rem;font-weight:normal;margin-top:4px}
 .back{background:#b2bec3!important;font-size:1.1rem!important;padding:12px 10px!important}
 #ops{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}#ops .mix{grid-column:1/-1}
@@ -60,7 +61,9 @@ button.say{background:#0984e3}button.on{background:#d63031}
 
 <div class="step" id="stepMode"><h2 data-t="x_mode"></h2><div class="en">How do you want to play?</div>
 <button class="big" id="mSolo" style="background:#00b894">🧒 <span data-t="x_solo"></span><small>Play alone and win stars</small></button>
-<button class="big" id="mBat" style="background:#e17055">⚔️ <span data-t="x_bat"></span><small>Mateo vs Felipe, taking turns</small></button></div>
+<button class="big" id="mBat" style="background:#e17055">⚔️ <span data-t="x_bat"></span><small>Two players, taking turns</small></button></div>
+
+<div class="step" id="stepPair"><h2 data-t="who"></h2><div class="en">Who is playing?</div><div id="pairs"></div></div>
 
 <div class="step" id="stepOp"><h2 data-t="x_op"></h2><div class="en">Pick an operation</div><div id="ops"></div>
 <button class="big back" id="opBack">← <span data-t="x_back"></span><small>Back</small></button></div>
@@ -172,8 +175,8 @@ const unlocked=(op,L)=>BATTLE||L==0||stars(op)[L-1]>0;
 
 /* ---------- screens ---------- */
 let BATTLE=false,OP="add",LV=0,starter=0;
-const KIDS2=["Mateo","Felipe"],KCOL={Mateo:"#0984e3",Felipe:"#e17055"};
-function show(id){["stepMode","stepOp","stepLv"].forEach(x=>$(x).style.display=x==id?"block":"none");
+let KIDS2=KIDS.slice(0,2);
+function show(id){["stepMode","stepPair","stepOp","stepLv"].forEach(x=>$(x).style.display=x==id?"block":"none");
   ["game","end"].forEach(x=>$(x).style.display=x==id?"block":"none");if(id!="game"){$("vs").style.display="none";$("turn").style.display="none"}}
 function renderOps(){const o=$("ops");o.innerHTML="";["add","sub","mul","div","mix"].forEach(op=>{const b=document.createElement("button");b.className="big"+(op=="mix"?" mix":"");b.dataset.op=op;b.style.background=OPCOL[op];
   b.innerHTML=`<span>${OPICON[op]}</span>${cap(S[LANG].OPS[op][0])}<small>${cap(OPEN[op])}</small>`;b.onclick=()=>{OP=op;renderLv()};o.appendChild(b)});show("stepOp")}
@@ -246,8 +249,8 @@ $("mic").onclick=()=>{if(lock)return;const h=$("heard");if(!SR){h.textContent=t(
 if(!SR)$("mic").style.display="none";
 
 $("hear").onclick=ask;
-$("mSolo").onclick=()=>{BATTLE=false;renderOps()};$("mBat").onclick=()=>{BATTLE=true;starter=0;renderOps()};
-$("opBack").onclick=()=>show("stepMode");$("lvBack").onclick=renderOps;
+$("mSolo").onclick=()=>{BATTLE=false;renderOps()};$("mBat").onclick=()=>{BATTLE=true;starter=0;pairPicker($("pairs"),p=>{KIDS2=p;renderOps()});show("stepPair")};
+$("opBack").onclick=()=>show(BATTLE?"stepPair":"stepMode");$("lvBack").onclick=renderOps;
 $("again").onclick=start;$("next").onclick=()=>{LV++;start()};$("choose").onclick=()=>show("stepMode");
 show("stepMode");
 window.MATHS={frW,esW,gen,choices,numbersIn,stars};
