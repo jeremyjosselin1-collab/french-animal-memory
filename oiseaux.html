@@ -30,7 +30,7 @@ button small{display:block;font-size:.75rem;font-weight:normal;opacity:.9}
 .ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0006;z-index:10;padding:10px;overflow:auto}
 .card{background:#fff7e6;border-radius:24px;padding:16px 18px;max-width:560px;width:100%;box-shadow:0 10px 30px #0005;margin:auto}
 .card h2{margin:4px 0 0;font-size:1.7rem}.card .en{color:#666;font-size:.95rem;margin:2px 0 10px}
-#lvGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+#lvGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:10px 0}
 #lvGrid button{margin:0;padding:12px 4px;font-size:1.5rem;font-weight:bold;background:linear-gradient(135deg,#d63031,#e17055);border-radius:16px}
 #lvGrid button.lock{background:#b2bec3;cursor:default}
 #lvGrid button span{display:block;font-size:.85rem;letter-spacing:-1px;min-height:1.1em}
@@ -121,6 +121,7 @@ function beam(x,b,w,m){blk(x,b-11,w,22,m);return b-22}
 function frame(x,b,w,h,m){col(x-w/2+11,b,h,m);col(x+w/2-11,b,h,m);return beam(x,b-h,w,m)}
 function box(x,b,s,m){blk(x,b-s/2,s,s,m);return b-s}
 function ani(x,b){slots.push([x,b-26])}
+function stack(x,b,n,sz,m){for(let k=0;k<n;k++)b=box(x,b,sz,m);return b}
 const LEVELS=[
  {m:"t",birds:"rrr",build(){ani(1100,frame(1100,G,140,110,"w"))}},
  {m:"t",birds:"rrr",build(){ani(1000,frame(1000,G,120,110,"w"));ani(1280,frame(1280,G,120,140,"w"))}},
@@ -130,7 +131,22 @@ const LEVELS=[
  {m:"c",n:3,birds:"rbyk",pick:1,build(){ani(880,box(880,G,60,"i"));const t=frame(1150,G,320,110,"w");ani(1150,G);ani(1080,frame(1080,t,120,90,"w"));ani(1220,frame(1220,t,120,90,"w"))}},
  {m:"t",birds:"rkbk",build(){const t=frame(1050,G,200,130,"s");ani(1050,G);ani(1050,box(1050,t,50,"i"));const u=frame(1320,G,160,110,"w");ani(1320,G);ani(1320,u)}},
  {m:"c",n:4,birds:"rkbyk",pick:1,build(){const a=frame(1000,G,180,120,"s"),b=frame(1250,G,180,120,"s");ani(1000,G);ani(1250,G);
-   ani(1000,frame(1000,a,180,100,"w"));ani(1250,frame(1250,b,180,100,"w"));ani(1450,box(1450,G,60,"i"))}}];
+   ani(1000,frame(1000,a,180,100,"w"));ani(1250,frame(1250,b,180,100,"w"));ani(1450,box(1450,G,60,"i"))}},
+ {m:"t",birds:"rry",pick:1,build(){const a=frame(1000,G,120,100,"w"),b=frame(1000,a,120,100,"w");ani(1000,G);ani(1000,frame(1000,b,120,80,"w"));
+   const c=frame(1300,G,120,100,"i");ani(1300,c);frame(1300,c,120,100,"i")}},
+ {m:"c",n:3,birds:"rbb",build(){const t=frame(1150,G,400,120,"i");ani(1050,G);ani(1250,G);ani(1080,t);ani(1220,t)}},
+ {m:"t",birds:"kry",build(){const t=frame(1100,G,220,120,"s");ani(1050,G);ani(1150,G);ani(1100,frame(1100,t,220,90,"w"));ani(1380,box(1380,G,60,"w"))}},
+ {m:"c",n:4,birds:"rrybk",pick:1,build(){ani(850,box(850,G,60,"w"));ani(1000,frame(1000,G,100,120,"w"));ani(1150,frame(1150,G,100,170,"i"));ani(1300,frame(1300,G,100,120,"w"));ani(1450,box(1450,G,60,"s"))}},
+ {m:"t",birds:"rbk",build(){ani(1000,stack(1000,G,3,60,"i"));ani(1150,stack(1150,G,4,60,"w"));ani(1300,stack(1300,G,2,60,"s"))}},
+ {m:"c",n:4,birds:"rykb",pick:1,build(){const a=frame(1000,G,160,130,"s");frame(1300,G,160,130,"s");ani(1000,G);ani(1300,G);
+   const t=beam(1150,a,460,"w");ani(1000,t);ani(1150,t);ani(1300,t)}},
+ {m:"t",birds:"bbk",build(){col(1100,G,260,"s");col(1122,G,260,"s");ani(1260,box(1260,G,60,"w"));ani(1480,frame(1480,frame(1480,G,100,150,"w"),100,100,"w"))}},
+ {m:"c",n:4,birds:"rkbyr",pick:1,build(){const a=frame(1200,G,260,110,"w");ani(1140,G);ani(1260,G);const b=frame(1200,a,260,100,"i");ani(1150,a);ani(1250,a);ani(1200,frame(1200,b,140,80,"w"))}},
+ {m:"t",birds:"kky",build(){[1000,1350].forEach(x=>{const a=frame(x,G,180,120,"s");ani(x,G);frame(x,a,180,90,"i");ani(x,a)})}},
+ {m:"c",n:6,birds:"rbykbk",pick:1,build(){ani(820,box(820,G,60,"w"));[[980,120,"w"],[1180,160,"i"],[1380,120,"s"]].forEach(([x,h,m])=>{ani(x,G);ani(x,frame(x,G,130,h,m))})}},
+ {m:"t",birds:"ybk",build(){let b=G;["w","i","w","i"].forEach((m,k)=>{ani(1250,b);b=frame(1250,b,150,k==3?80:90,m)});ani(1250,b)}},
+ {m:"c",n:8,birds:"rkbykbr",pick:1,build(){[[950,"s","w"],[1200,"s","i"]].forEach(([x,m1,m2])=>{const a=frame(x,G,160,110,m1);ani(x,G);ani(x,a);ani(x,frame(x,a,160,100,m2))});
+   const c=frame(1430,G,120,120,"w");ani(1430,G);ani(1430,c);ani(1430,frame(1430,c,120,90,"i"))}}];
 
 /* ---------- state ---------- */
 let engine,lvl=0,LV,queue,loaded=null,active=[],state="menu",drag=null,anims=[],target=null,need=0,ko=0,score=0,bonusLeft=2,bonusUsed=0,
@@ -153,7 +169,7 @@ function startLevel(i){
   Events.on(engine,"collisionStart",onHit);
   Composite.add(engine.world,Bodies.rectangle(W/2,G+60,6000,120,{isStatic:true,friction:1,kind:"ground"}));
   B=[];slots=[];LV.build();Composite.add(engine.world,B);
-  const pool=shuffle(ANIMALS);anims=slots.map(([x,y],k)=>{const b=Bodies.circle(x,y,26,{density:.001,friction:.8,restitution:.2,frictionAir:.01});
+  const pool=shuffle(ANIMALS.filter(a=>a.e!="🐦"));anims=slots.map(([x,y],k)=>{const b=Bodies.circle(x,y,26,{density:.001,friction:.8,restitution:.2,frictionAir:.01});
     Object.assign(b,{kind:"ani",a:pool[k],hp:32,max:32});return b});Composite.add(engine.world,anims);
   target=LV.m=="t"?anims[Math.floor(Math.random()*anims.length)]:null;need=LV.m=="c"?LV.n:1;
   queue=LV.birds.split("");loaded=null;active=[];ko=0;score=0;bonusLeft=2;bonusUsed=0;lastPath=[];curPath=[];floats=[];hintT=0;dead=new Set();usedCols=new Set();
